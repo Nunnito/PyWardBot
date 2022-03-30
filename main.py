@@ -169,7 +169,7 @@ async def forwarders(message: Message) -> None:
         name = ("🟢 " if forwarder["enabled"] else "🔴 ") + forwarder["name"]
         forwarder_id = f"forwarder_{forwarder['target']}"
         keyboard.append([{name: forwarder_id}])
-    keyboard.append([{"Atrás": "menu"}])
+    keyboard.append([{"◀️ Atrás": "menu"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
     text = "Selecciona un reenvío"
@@ -202,7 +202,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{source_chats: f"source_chats_{forwarder_id}"}],
         [{"ℹ️ Información": f"info_{forwarder_id}"}],
         [{"🗑️ Eliminar": f"delete_forwarder_{forwarder_id}"}],
-        [{"Atrás": "forwarders"}]
+        [{"◀️ Atrás": "forwarders"}]
     ]
     if forwarder["forwarding_mode"] != "copy":
         keyboard.pop(3)
@@ -224,7 +224,7 @@ async def change_name(message: Message, forwarder_id: str, change=False):
     if not change:
         # Create the keyboard
         keyboard = [
-            [{"Atrás": f"forwarder_{forwarder_id}"}]
+            [{"◀️ Atrás": f"forwarder_{forwarder_id}"}]
         ]
         keyboard = await create_keyboard(keyboard)
         # Create the text
@@ -279,8 +279,8 @@ async def change_replace_words(message: Message, forwarder_id: str):
         keyboard.append([
             {f"{word} -> {value}":
              f"replace_delete_{word_md5}_{forwarder_id}"}])
-    keyboard.append([{"Añadir": f"replace_add_{forwarder_id}"}])
-    keyboard.append([{"Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Añadir": f"replace_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
 
     # Create the text
@@ -301,7 +301,7 @@ async def delete_replace_word(message: Message, forwarder_id: str,
     for source_id, source_name in forwarder["source"].items():
         name = f"{source_name} ({source_id})"
         keyboard.append([{name: f"source_chat_{source_id}"}])
-    keyboard.append([{"Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
     text = "Selecciona un chat de origen."
@@ -327,7 +327,7 @@ async def add_replace_word(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"Atrás": f"replace_words_{forwarder_id}"}]
+        [{"◀️ Atrás": f"replace_words_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -387,8 +387,8 @@ async def change_blocked_words(message: Message, forwarder_id: str):
         word_md5 = await md5(word)
         keyboard.append([
             {f"{word}": f"blocked_delete_{word_md5}_{forwarder_id}"}])
-    keyboard.append([{"Añadir": f"blocked_add_{forwarder_id}"}])
-    keyboard.append([{"Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Añadir": f"blocked_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
 
     # Create the text
@@ -421,7 +421,7 @@ async def add_blocked_word(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"Atrás": f"blocked_words_{forwarder_id}"}]
+        [{"◀️ Atrás": f"blocked_words_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -467,8 +467,8 @@ async def source_chats(message: Message, forwarder_id) -> None:
     for source_id, source_name in forwarder["source"].items():
         name = f"{source_name}"
         keyboard.append([{name: f"source_chat_{source_id}_{forwarder_id}"}])
-    keyboard.append([{"Añadir": f"source_add_{forwarder_id}"}])
-    keyboard.append([{"Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Añadir": f"source_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
     text = "Selecciona un chat de origen."
@@ -482,7 +482,7 @@ async def source_chat(message: Message, forwarder_id: str, source_id: str):
     # Create the keyboard
     keyboard = [
         [{"🗑️ Eliminar": f"source_delete_{source_id}_{forwarder_id}"}],
-        [{"Atrás": f"source_chats_{forwarder_id}"}]
+        [{"◀️ Atrás": f"source_chats_{forwarder_id}"}]
     ]
 
     text = "Configuración del chat de origen."
@@ -516,7 +516,7 @@ async def source_add(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"Atrás": f"source_chats_{forwarder_id}"}]
+        [{"◀️ Atrás": f"source_chats_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -572,7 +572,7 @@ async def forwarder_info(message: Message, forwarder_id: str):
     """ Create the forwarders menu. """
     # Create the keyboard
     keyboard = [
-        [{"Atrás": f"forwarder_{forwarder_id}"}]
+        [{"◀️ Atrás": f"forwarder_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -588,7 +588,7 @@ async def new_forwarder_get_target(message: Message, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"Atrás": "menu"}]
+        [{"◀️ Atrás": "menu"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -640,7 +640,7 @@ async def new_forwarder_get_source(message: Message, forwarder_id: str,
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"Atrás": "forwarders"}]
+        [{"◀️ Atrás": "forwarders"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
