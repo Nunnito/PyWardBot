@@ -1,7 +1,13 @@
 import json
 import os
+from pathlib import Path
 
 from logger import logger
+
+# Create a folder that will hold the configuration files
+app_dir = Path(__file__).parent
+config_dir = app_dir / "config"
+config_dir.mkdir(exist_ok=True)
 
 
 class Bot:
@@ -15,11 +21,11 @@ class Bot:
         if not os.path.exists("bot.json"):
             logger.error("bot.json not found")
 
-            with open("bot.json", "w") as f:
+            with open(config_dir/"bot.json", "w") as f:
                 json.dump(self.bot, f, indent=4, ensure_ascii=False)
             exit(1)
 
-        with open("bot.json", "r") as f:
+        with open(config_dir/"bot.json", "r") as f:
             return json.load(f)
 
 
@@ -31,11 +37,11 @@ class Forwarding:
         if not os.path.exists("forwarding.json"):
             logger.error("forwarding.json not found")
 
-            with open("forwarding.json", "w") as f:
+            with open(config_dir/"forwarding.json", "w") as f:
                 json.dump(self.forwarding, f, indent=4, ensure_ascii=False)
             exit(1)
 
-        with open("forwarding.json", "r") as f:
+        with open(config_dir/"forwarding.json", "r") as f:
             return json.load(f)
 
     async def get_forwarding_ids(self) -> list:
@@ -68,7 +74,7 @@ class Forwarding:
                 for key, value in forwarder_dict.items():
                     forwarder[key] = value
 
-        with open("forwarding.json", "w") as f:
+        with open(config_dir/"forwarding.json", "w") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
 
     async def add_forwarder(self, name: str, target: str, source: dict):
@@ -90,7 +96,7 @@ class Forwarding:
             }
         )
 
-        with open("forwarding.json", "w") as f:
+        with open(config_dir/"forwarding.json", "w") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
 
     async def remove_forwarder(self, forwarder_id: str):
@@ -101,7 +107,7 @@ class Forwarding:
             if forwarder["target"] == int(forwarder_id):
                 config["forwarders"].remove(forwarder)
 
-        with open("forwarding.json", "w") as f:
+        with open(config_dir/"forwarding.json", "w") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
 
 
@@ -111,11 +117,11 @@ class MessagesIDs:
         if not os.path.exists("messages.json"):
             logger.error("messages.json not found")
 
-            with open("messages.json", "w") as f:
+            with open(config_dir/"messages.json", "w") as f:
                 json.dump({}, f, indent=4, ensure_ascii=False)
             exit(1)
 
-        with open("messages.json", "r") as f:
+        with open(config_dir/"messages.json", "r") as f:
             return json.load(f)
 
     async def add_message_id(self, target: str, source: str, real_id: int,
@@ -130,5 +136,5 @@ class MessagesIDs:
             messages_ids[target][source] = {}
         messages_ids[target][source][str(real_id)] = copy_id
 
-        with open("messages.json", "w") as f:
+        with open(config_dir/"messages.json", "w") as f:
             json.dump(messages_ids, f, indent=4, ensure_ascii=False)
