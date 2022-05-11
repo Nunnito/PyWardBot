@@ -13,13 +13,18 @@ config_dir.mkdir(exist_ok=True)
 class Bot:
     bot = {
         "api_id": 1234567,
-        "api_hash": "0123456789abcdef0123456789abcdef"
+        "api_hash": "0123456789abcdef0123456789abcdef",
+        "admins": []
     }
 
     def get_config(self) -> dict:
         """Load the bot configuration from the bot.json file."""
-        if not os.path.exists("bot.json"):
+        if not os.path.exists(config_dir/"bot.json"):
             logger.error("bot.json not found")
+            logger.warning("bot.json has been created with default values. " +
+                           "Please edit it with your own api_id and api_hash" +
+                           " values. You can find them on " +
+                           "https://my.telegram.org/apps")
 
             with open(config_dir/"bot.json", "w") as f:
                 json.dump(self.bot, f, indent=4, ensure_ascii=False)
@@ -34,7 +39,7 @@ class Forwarding:
 
     async def get_config(self) -> dict:
         """Load the forwarding configuration from the forwarding.json file."""
-        if not os.path.exists("forwarding.json"):
+        if not os.path.exists(config_dir/"forwarding.json"):
             logger.warning("forwarding.json not found")
 
             with open(config_dir/"forwarding.json", "w") as f:
@@ -113,7 +118,7 @@ class Forwarding:
 class MessagesIDs:
     async def get_message_ids(self) -> list:
         """Get the list of message IDs."""
-        if not os.path.exists("messages.json"):
+        if not os.path.exists(config_dir/"messages.json"):
             logger.warning("messages.json not found")
 
             with open(config_dir/"messages.json", "w") as f:
