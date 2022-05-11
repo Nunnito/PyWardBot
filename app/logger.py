@@ -42,10 +42,6 @@ class ColorFormatter(logging.Formatter):
 
 
 # TODO: Use the config file log level
-# Create file handler
-file_handler = logging.FileHandler("bot.log")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(ColorFormatter())
 
 # Create console handler
 console_handler = logging.StreamHandler()
@@ -55,5 +51,4 @@ console_handler.setFormatter(ColorFormatter())
 # Create logger
 logger = logging.getLogger("main")
 logger.setLevel(logging.DEBUG)
-logger.addHandler(file_handler)
 logger.addHandler(console_handler)
