@@ -145,12 +145,12 @@ async def menu(message: Message, edit: bool = True) -> None:
     """ Create the menu. """
     # Create the keyboard
     keyboard = [
-        [{"🔥 Ver reenvíos": "forwarders"}],
-        [{"➕ Crear reenvío": "new"}],
+        [{"🔥 See forwarding": "forwarders"}],
+        [{"➕ Create forwarding": "new"}],
     ]
     keyboard = await create_keyboard(keyboard)
     # Create the text
-    text = "Bienvenido, ¿qué quieres hacer?"
+    text = "Welcome, what do you want to do?"
 
     # Send the message
     if edit:
@@ -169,10 +169,10 @@ async def forwarders(message: Message) -> None:
         name = ("🟢 " if forwarder["enabled"] else "🔴 ") + forwarder["name"]
         forwarder_id = f"forwarder_{forwarder['target']}"
         keyboard.append([{name: forwarder_id}])
-    keyboard.append([{"◀️ Atrás": "menu"}])
+    keyboard.append([{"◀️ Back": "menu"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
-    text = "Selecciona un reenvío"
+    text = "Select a forwarding"
 
     # Send the message
     await message.edit(text, reply_markup=keyboard)
@@ -183,14 +183,14 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
     # Get the forwarder
     forwarder = await forwardings.get_forwarder(forwarder_id)
 
-    name = f"✏️ Nombre: {forwarder['name']}"
-    enabled = "🟢 Habilitado" if forwarder["enabled"] else "🔴 Deshabilitado"
-    forwarding_mode = "↪️ Modo de reenvío: "
-    forwarding_mode += ("copiar" if forwarder["forwarding_mode"] == "copy" else
-                        "reenviar")
-    replace_words = "🔖 Palabras a reemplazar"
-    blocked_words = "🚫 Palabras bloqueadas"
-    source_chats = "👁 Chats de origen"
+    name = f"✏️ Name: {forwarder['name']}"
+    enabled = "🟢 Enabled" if forwarder["enabled"] else "🔴 Disabled"
+    forwarding_mode = "↪️ Forwarding mode: "
+    forwarding_mode += ("copy" if forwarder["forwarding_mode"] == "copy" else
+                        "forward")
+    replace_words = "🔖 Words to replace"
+    blocked_words = "🚫 Blocked words"
+    source_chats = "👁 Source chats"
 
     # Create the keyboard
     keyboard = [
@@ -200,14 +200,14 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
         [{source_chats: f"source_chats_{forwarder_id}"}],
-        [{"ℹ️ Información": f"info_{forwarder_id}"}],
-        [{"🗑️ Eliminar": f"delete_forwarder_{forwarder_id}"}],
-        [{"◀️ Atrás": "forwarders"}]
+        [{"ℹ️ Information": f"info_{forwarder_id}"}],
+        [{"🗑️ Delete": f"delete_forwarder_{forwarder_id}"}],
+        [{"◀️ Back": "forwarders"}]
     ]
     if forwarder["forwarding_mode"] != "copy":
         keyboard.pop(3)
 
-    text = "Configuración del reenvío"
+    text = "Forwarding settings"
 
     # Send the message
     keyboard = await create_keyboard(keyboard)
@@ -224,11 +224,11 @@ async def change_name(message: Message, forwarder_id: str, change=False):
     if not change:
         # Create the keyboard
         keyboard = [
-            [{"◀️ Atrás": f"forwarder_{forwarder_id}"}]
+            [{"◀️ Back": f"forwarder_{forwarder_id}"}]
         ]
         keyboard = await create_keyboard(keyboard)
         # Create the text
-        text = "Introduce el nuevo nombre"
+        text = "Enter the new name"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -279,13 +279,13 @@ async def change_replace_words(message: Message, forwarder_id: str):
         keyboard.append([
             {f"{word} -> {value}":
              f"replace_delete_{word_md5}_{forwarder_id}"}])
-    keyboard.append([{"➕ Añadir": f"replace_add_{forwarder_id}"}])
-    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Add": f"replace_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Back": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
 
     # Create the text
-    text = "Añade una palabra para reemplazar.\n"
-    text += "Para eliminar una palabra, pulsa sobre su nombre."
+    text = "Add a word to replace.\n"
+    text += "To delete a word, click on its name."
 
     # Send the message
     await message.edit(text, reply_markup=keyboard)
@@ -301,10 +301,10 @@ async def delete_replace_word(message: Message, forwarder_id: str,
     for source_id, source_name in forwarder["source"].items():
         name = f"{source_name} ({source_id})"
         keyboard.append([{name: f"source_chat_{source_id}"}])
-    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"◀️ Back": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
-    text = "Selecciona un chat de origen."
+    text = "Select a source chat."
 
     # Send the message
     await message.edit(text, reply_markup=keyboard)
@@ -327,20 +327,20 @@ async def add_replace_word(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": f"replace_words_{forwarder_id}"}]
+        [{"◀️ Back": f"replace_words_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
     if not change:
         # Create the text
-        text = "Introduce la palabra a reemplazar en este formato:\n"
-        text += "`palabra>palabra_reemplazada`\n\n"
-        text += "Puedes añadir varios reemplazos a la vez, solamente \n"
-        text += "separándolos con un salto de línea.\n\n"
-        text += "Ejemplo:\n"
-        text += "`palabra1>palabra_reemplazada1\n"
-        text += "palabra2>palabra_reemplazada2\n"
-        text += "palabra3>palabra_reemplazada3`"
+        text = "Enter the word to be replaced in this format:\n"
+        text += "`word>replaced_word`\n\n"
+        text += "You can add several replacements at the same time, just\n"
+        text += "split them with a line break.\n\n"
+        text += "Example:\n"
+        text += "`word1>replaced_word1\n"
+        text += "word2>replaced_word2\n"
+        text += "word3>replaced_word3`"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -353,8 +353,8 @@ async def add_replace_word(message: Message, forwarder_id: str, change=False):
 
         # Check if the has the right format
         if ">" not in answer:
-            text = "**Error:** El formato no es correcto.\n\n"
-            text += f"**Texto introducido:** ```{answer}```"
+            text = "**Error:** The format is not correct.\n\n"
+            text += f"**Text entered:** ```{answer}```"
             await message_edit.edit(text, reply_markup=keyboard)
             return
 
@@ -387,13 +387,13 @@ async def change_blocked_words(message: Message, forwarder_id: str):
         word_md5 = await md5(word)
         keyboard.append([
             {f"{word}": f"blocked_delete_{word_md5}_{forwarder_id}"}])
-    keyboard.append([{"➕ Añadir": f"blocked_add_{forwarder_id}"}])
-    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Add": f"blocked_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Back": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
 
     # Create the text
-    text = "Añade una palabra para reemplazar.\n"
-    text += "Para eliminar una palabra, pulsa sobre su nombre."
+    text = "Add a word to replace.\n"
+    text += "To delete a word, click on its name."
 
     # Send the message
     await message.edit(text, reply_markup=keyboard)
@@ -421,17 +421,17 @@ async def add_blocked_word(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": f"blocked_words_{forwarder_id}"}]
+        [{"◀️ Back": f"blocked_words_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
     if not change:
         # Create the text
-        text = "Introduce la palabra que quieras bloquear.\n\n"
-        text += "Puedes añadir varios reemplazos a la vez, solamente \n"
-        text += "separándolos con un salto de línea.\n\n"
-        text += "Ejemplo:\n"
-        text += "`palabra1\npalabra2\npalabra3`"
+        text = "Enter the word you want to block.\n\n"
+        text += "You can add several words to block at the same time, \n"
+        text += "just split them with a line break.\n\n"
+        text += "Example:\n"
+        text += "`word1\nword2\nword3`"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -467,11 +467,11 @@ async def source_chats(message: Message, forwarder_id) -> None:
     for source_id, source_name in forwarder["source"].items():
         name = f"{source_name}"
         keyboard.append([{name: f"source_chat_{source_id}_{forwarder_id}"}])
-    keyboard.append([{"➕ Añadir": f"source_add_{forwarder_id}"}])
-    keyboard.append([{"◀️ Atrás": f"forwarder_{forwarder_id}"}])
+    keyboard.append([{"➕ Add": f"source_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Back": f"forwarder_{forwarder_id}"}])
     keyboard = await create_keyboard(keyboard)
     # Create the text
-    text = "Selecciona un chat de origen."
+    text = "Select a source chat."
 
     # Send the message
     await message.edit(text, reply_markup=keyboard)
@@ -481,11 +481,11 @@ async def source_chat(message: Message, forwarder_id: str, source_id: str):
     """ Forward the message to the forwarder. """
     # Create the keyboard
     keyboard = [
-        [{"🗑️ Eliminar": f"source_delete_{source_id}_{forwarder_id}"}],
-        [{"◀️ Atrás": f"source_chats_{forwarder_id}"}]
+        [{"🗑️ Delete": f"source_delete_{source_id}_{forwarder_id}"}],
+        [{"◀️ Back": f"source_chats_{forwarder_id}"}]
     ]
 
-    text = "Configuración del chat de origen."
+    text = "Source chat settings."
     text += await get_chat_info(source_id)
 
     # Update the forwarders name
@@ -522,15 +522,15 @@ async def source_add(message: Message, forwarder_id: str, change=False):
 
     if not change:
         # Create the text
-        text = "Introduce el chat de origen.\n\n"
-        text += "Puedes añadir chat de varias formas:\n\n"
-        text += "**-Introduciendo el ID del chat**\n"
+        text = "Enter the source chat.\n\n"
+        text += "You can add chats in several ways:\n\n"
+        text += "**-Entering the chat ID**\n"
         text += "`628910404\n628910400`\n\n"
-        text += "**-Introduciendo el nombre de usuario del chat**\n"
+        text += "**-Entering the chat username**\n"
         text += "`@Nunnito\n@Python`\n\n"
-        text += "**-Introduciendo algún enlace de un mensaje del chat**\n"
+        text += "**-Entering a link from a chat message**\n"
         text += "`https://t.me/c/1165316653/1815937\nhttps://t.me/python/1234`"
-        text += "\n\n**-Reenviando un mensaje del chat**\n"
+        text += "\n\n**-Forwarding a chat message**\n"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -553,11 +553,11 @@ async def source_add(message: Message, forwarder_id: str, change=False):
         # Create the text
         text = ""
         if chats_ids:
-            text = "Se han añadido los siguientes chats de origen:\n"
+            text = "The following source chats have been added:\n"
             for chat_id, name in chats_ids.items():
                 text += f"**{name}**\n"
         if invalid_ids:
-            text += "\n\nLos siguientes chats no se han añadido:\n"
+            text += "\n\nThe following chats have not been added:\n"
             for chat_id in invalid_ids:
                 text += f"**{chat_id}**\n"
 
@@ -572,7 +572,7 @@ async def forwarder_info(message: Message, forwarder_id: str):
     """ Create the forwarders menu. """
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": f"forwarder_{forwarder_id}"}]
+        [{"◀️ Back": f"forwarder_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
@@ -588,21 +588,21 @@ async def new_forwarder_get_target(message: Message, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": "menu"}]
+        [{"◀️ Back": "menu"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
     if not change:
         # Create the text
-        text = "Introduce el chat de destino.\n\n"
-        text += "Puedes añadir chat de varias formas:\n\n"
-        text += "**-Introduciendo el ID del chat**\n"
+        text = "Enter the target chat.\n\n"
+        text += "You can add chats in several ways:\n\n"
+        text += "**-Entering the chat ID**\n"
         text += "`628910404`\n\n"
-        text += "**-Introduciendo el nombre de usuario del chat**\n"
+        text += "**-Entering the chat username**\n"
         text += "`@Nunnito`\n\n"
-        text += "**-Introduciendo algún enlace de un mensaje del chat**\n"
+        text += "**-Entering a link from a chat message**\n"
         text += "`https://t.me/c/1165316653/1815937`"
-        text += "\n\n**-Reenviando un mensaje del chat**\n"
+        text += "\n\n**-Forwarding a chat message**\n"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -616,12 +616,12 @@ async def new_forwarder_get_target(message: Message, change=False):
         # Get all the chats ids
         chats_ids, invalid_ids = await get_chats_id(message)
         if not chats_ids:
-            text = "El chat de destino no es válido."
+            text = "The target chat is invalid."
             await message_edit.edit(text, reply_markup=keyboard)
             answer_users[str(user_id)] = [False, None, None, None]
             return
         elif await forwardings.get_forwarder(list(chats_ids.keys())[0]):
-            text = "El chat de destino ya está en uso."
+            text = "The target chat is already in use."
             await message_edit.edit(text, reply_markup=keyboard)
             answer_users[str(user_id)] = [False, None, None, None]
             return
@@ -640,23 +640,23 @@ async def new_forwarder_get_source(message: Message, forwarder_id: str,
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": "forwarders"}]
+        [{"◀️ Back": "forwarders"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
     if not change:
         # Create the text
-        text = "Excelente, ahora introduce el chat de destino.\n\n"
-        text += "Se añade de una manera muy similar al de chat de origen, "
-        text += "la única diferencia es que puedes añadir más de uno.\n\n"
-        text += "Puedes añadir chat de varias formas:\n\n"
-        text += "**-Introduciendo el ID del chat**\n"
+        text = "Excellent, now enter the target chat.\n\n"
+        text += "It is added in a very similar way to the source chat., "
+        text += "the only difference is that you can add more than one.\n\n"
+        text += "You can add chats in several ways:\n\n"
+        text += "**-Entering the chat ID**\n"
         text += "`628910404\n628910400`\n\n"
-        text += "**-Introduciendo el nombre de usuario del chat**\n"
+        text += "**-Entering the chat username**\n"
         text += "`@Nunnito\n@Python`\n\n"
-        text += "**-Introduciendo algún enlace de un mensaje del chat**\n"
+        text += "**-Entering a link from a chat message**\n"
         text += "`https://t.me/c/1165316653/1815937\nhttps://t.me/python/1234`"
-        text += "\n\n**-Reenviando un mensaje del chat**\n"
+        text += "\n\n**-Forwarding a chat message**\n"
 
         # Send the message
         await message.edit(text, reply_markup=keyboard)
@@ -670,7 +670,7 @@ async def new_forwarder_get_source(message: Message, forwarder_id: str,
         # Get all the chats ids
         sources, invalid_ids = await get_chats_id(message)
         if not sources:
-            text = "El chat de origen no es válido."
+            text = "The source chat is invalid."
             await message_edit.edit(text, reply_markup=keyboard)
             answer_users[str(user_id)] = [False, None, None, None]
             return
@@ -678,11 +678,11 @@ async def new_forwarder_get_source(message: Message, forwarder_id: str,
         # Create the text
         text = ""
         if sources:
-            text = "Se han añadido los siguientes chats de origen:\n"
+            text = "The following source chats have been added:\n"
             for chat_id, name in sources.items():
                 text += f"**{name}**\n"
         if invalid_ids:
-            text += "\n\nLos siguientes chats no se han añadido:\n"
+            text += "\n\nThe following chats have not been added:\n"
             for chat_id in invalid_ids:
                 text += f"**{chat_id}**\n"
 
@@ -697,13 +697,13 @@ async def delete_forwarder(message: Message, forwarder_id: str, step=1):
     if step == 1:
         # Create the keyboard
         keyboard = [
-            [{"Sí, seguro": f"confirm_delete_forwarder_{forwarder_id}"}],
-            [{"No, cancelar": f"forwarder_{forwarder_id}"}]
+            [{"Yes, sure": f"confirm_delete_forwarder_{forwarder_id}"}],
+            [{"No, cancel": f"forwarder_{forwarder_id}"}]
         ]
         keyboard = await create_keyboard(keyboard)
 
         # Create the text
-        text = "¿Estás seguro de que quieres eliminarlo?"
+        text = "Are you sure you want to delete it?"
         text += await get_chat_info(forwarder_id)
 
         # Send the message
@@ -747,31 +747,31 @@ async def get_chat_info(chat_id: str) -> str:
         chat_info = await user.get_chat(chat_id)
         if chat_info.type == "channel" or chat_info.type == "supergroup":
             chat_type = "Canal" if chat_info.type == "channel" else "Grupo"
-            text = f"\n\n**Nombre:** {chat_info.title}"
+            text = f"\n\n**Name:** {chat_info.title}"
             text += f"\n**ID:** `{chat_info.id}`"
-            text += f"\n**Tipo:** {chat_type}"
+            text += f"\n**Type:** {chat_type}"
             if chat_info.username:
-                text += f"\n**Nombre de usuario:** @{chat_info.username}"
-            text += f"\n**Conteo de miembros:** {chat_info.members_count}"
-            text += "\n**Contenido protegido:** "
-            text += "Sí" if chat_info.has_protected_content else "No"
+                text += f"\n**Username:** @{chat_info.username}"
+            text += f"\n**Members count:** {chat_info.members_count}"
+            text += "\n**Protected content:** "
+            text += "Yes" if chat_info.has_protected_content else "No"
         elif chat_info.type == "private":
-            text = f"\n\n**Nombre:** {chat_info.first_name}"
+            text = f"\n\n**Name:** {chat_info.first_name}"
             if chat_info.last_name:
                 text += f" {chat_info.last_name}"
             text += f"\n**ID:** `{chat_info.id}`"
-            text += "\n**Tipo:** Privado"
+            text += "\n**Type:** Private"
             if chat_info.username:
-                text += f"\n**Nombre de usuario:** @{chat_info.username}"
+                text += f"\n**Username:** @{chat_info.username}"
         elif chat_info.type == "bot":
-            text = f"\n\n**Nombre:** {chat_info.first_name}"
+            text = f"\n\n**Name:** {chat_info.first_name}"
             text += f"\n**ID:** `{chat_info.id}`"
-            text += "\n**Tipo:** Bot"
-            text += f"\n**Nombre de usuario:** @{chat_info.username}"
+            text += "\n**Type:** Bot"
+            text += f"\n**Username:** @{chat_info.username}"
     except (ChannelInvalid, ChannelPrivate, PeerIdInvalid,
             UsernameNotOccupied):
-        text = "\n\n**Error:** No se ha podido obtener la información del "
-        text += "chat.\n**Motivo:** El chat no existe o no estás en él.\n"
+        text = "\n\n**Error:** Chat information could not be obtained.\n"
+        text += "**Reason:** The chat does not exist or you are not in it.\n"
         text += f"**ID:** `{chat_id}`"
 
     return text
