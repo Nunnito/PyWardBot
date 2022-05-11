@@ -11,6 +11,7 @@
 
 import os
 import re
+from pathlib import Path
 
 from pyrogram import Client, filters
 from pyrogram.types import (Message, InputMediaPhoto, InputMediaVideo,
@@ -23,6 +24,10 @@ from pyrogram.errors.exceptions.bad_request_400 import (MediaInvalid,
 from config import Bot, Forwarding, MessagesIDs
 from logger import logger
 
+# Config path
+app_dir = Path(__file__).parent
+config_dir = app_dir / "config"
+
 # Load the bot configuration
 bot_config = Bot().get_config()
 
@@ -31,7 +36,7 @@ bot_config = Bot().get_config()
 API_ID = bot_config["api_id"]
 API_HASH = bot_config["api_hash"]
 
-user = Client("user", API_ID, API_HASH)
+user = Client(str(Path(config_dir/"user")), API_ID, API_HASH)
 current_media_group = None  # Current media group ID
 
 Messages = MessagesIDs()

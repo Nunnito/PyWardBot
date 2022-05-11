@@ -1,5 +1,6 @@
 import hashlib
 import re
+from pathlib import Path
 
 from pyrogram import Client, filters
 from pyrogram.types import (Message, CallbackQuery, InlineKeyboardButton,
@@ -12,6 +13,11 @@ from pyrogram.errors.exceptions.not_acceptable_406 import ChannelPrivate
 
 from forward import user
 from config import Forwarding, Bot
+from logger import logger
+
+# Config path
+app_dir = Path(__file__).parent
+config_dir = app_dir / "config"
 
 # Load the bot configuration
 bot_config = Bot().get_config()
@@ -21,7 +27,7 @@ forwardings = Forwarding()
 API_ID = bot_config["api_id"]
 API_HASH = bot_config["api_hash"]
 
-bot = Client("bot", API_ID, API_HASH)
+bot = Client(str(Path(config_dir/"bot")), API_ID, API_HASH)
 commands = ["start", "menu", "new"]
 answer_users = {}
 
@@ -827,5 +833,10 @@ async def get_chats_id(message: Message) -> list | bool:
         return chats_ids, invalid_ids
 
 
+if not Path(config_dir/"user.session").exists():
+    logger.info("Log-in with your phone number")
 user.start()
+Bot().add_admin(user.get_me().id)
+if not Path(config_dir/"bot.session").exists():
+    logger.info("Log-in with you bot token")
 bot.run()
