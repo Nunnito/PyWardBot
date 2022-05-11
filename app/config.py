@@ -35,11 +35,10 @@ class Forwarding:
     async def get_config(self) -> dict:
         """Load the forwarding configuration from the forwarding.json file."""
         if not os.path.exists("forwarding.json"):
-            logger.error("forwarding.json not found")
+            logger.warning("forwarding.json not found")
 
             with open(config_dir/"forwarding.json", "w") as f:
                 json.dump(self.forwarding, f, indent=4, ensure_ascii=False)
-            exit(1)
 
         with open(config_dir/"forwarding.json", "r") as f:
             return json.load(f)
@@ -115,11 +114,10 @@ class MessagesIDs:
     async def get_message_ids(self) -> list:
         """Get the list of message IDs."""
         if not os.path.exists("messages.json"):
-            logger.error("messages.json not found")
+            logger.warning("messages.json not found")
 
             with open(config_dir/"messages.json", "w") as f:
                 json.dump({}, f, indent=4, ensure_ascii=False)
-            exit(1)
 
         with open(config_dir/"messages.json", "r") as f:
             return json.load(f)
