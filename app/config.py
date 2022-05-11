@@ -36,10 +36,11 @@ class Bot:
     def add_admin(self, admin: int) -> None:
         """Add an admin to the bot configuration."""
         if admin not in self.get_config()["admins"]:
-            self.get_config()["admins"].append(admin)
+            config = self.get_config()
+            config["admins"].append(admin)
 
             with open(config_dir/"bot.json", "w") as f:
-                json.dump(self.get_config(), f, indent=4, ensure_ascii=False)
+                json.dump(config, f, indent=4, ensure_ascii=False)
 
 
 class Forwarding:
