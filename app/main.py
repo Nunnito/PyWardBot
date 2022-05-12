@@ -146,6 +146,8 @@ async def on_callback_query(client: Client, callback_query: CallbackQuery):
         id_hash = data.split("_")[-1]
         await delete_forwarder(message, id_hash, 2)
 
+    callback_query.answer()
+
 
 async def menu(message: Message, edit: bool = True) -> None:
     """ Create the menu. """
