@@ -752,7 +752,7 @@ async def get_chat_info(chat_id: str) -> str:
     try:
         chat_info = await user.get_chat(chat_id)
         if chat_info.type == "channel" or chat_info.type == "supergroup":
-            chat_type = "Canal" if chat_info.type == "channel" else "Grupo"
+            chat_type = "Channel" if chat_info.type == "channel" else "Group"
             text = f"\n\n**Name:** {chat_info.title}"
             text += f"\n**ID:** `{chat_info.id}`"
             text += f"\n**Type:** {chat_type}"
