@@ -2,7 +2,7 @@ import hashlib
 import re
 from pathlib import Path
 
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import (Message, CallbackQuery, InlineKeyboardButton,
                             InlineKeyboardMarkup)
 from pyrogram.errors.exceptions.bad_request_400 import (ChannelInvalid,
@@ -841,4 +841,8 @@ user.start()
 Bot().add_admin(user.get_me().id)
 if not Path(config_dir/"bot.session").exists():
     logger.info("Log-in with you bot token")
-bot.run()
+bot.start()
+logger.info("Bot started")
+logger.info(f"Bot username: @{bot.get_me().username}")
+idle()
+bot.stop()
