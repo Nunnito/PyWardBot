@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from pyrogram import Client, filters
+from pyrogram.raw.functions.messages import SendVote
 from pyrogram.types import (Message, InputMediaPhoto, InputMediaVideo,
                             InputMediaAudio, InputMediaDocument,
                             InputMediaAnimation)
@@ -382,6 +383,41 @@ async def copy_message(message: Message, target: dict, edited=False,
                     logger.error("The poll could not be sent. Maybe the " +
                                  "target is a private chat?")
                     return
+            elif message.media == "poll" and message.poll.type == "quiz":
+                # Answer the quiz to get the correct answer and explanation
+                peer = await user.resolve_peer(message.chat.id)
+                msg_id = message.message_id
+                options = [b'0']
+                r = await user.send(SendVote(peer=peer, msg_id=msg_id,
+                                             options=options))
+
+                # Get the correct answer
+                for question in r.updates[0].results.results:
+                    if question.correct:
+                        correct_option = int(question.option)
+                        break
+                # Get the explanation
+                explanation = r.updates[0].results.solution
+
+                # Get base quiz
+                question = message.poll.question
+                options = [option.text for option in message.poll.options]
+                is_anonymous = message.poll.is_anonymous
+                type = message.poll.type
+                allows_multiple_answers = message.poll.allows_multiple_answers
+
+                # Send the quiz
+                try:
+                    msg = await user.send_poll(target, question, options,
+                                               is_anonymous, type,
+                                               allows_multiple_answers,
+                                               correct_option, explanation,
+                                               reply_to_message_id=reply_id)
+                except MediaInvalid:
+                    logger.error("The poll could not be sent. Maybe the " +
+                                 "target is a private chat?")
+                    return
+
             to_user = msg.chat.title if msg.chat.title else msg.chat.first_name
             logger.info(f"Sending media from {from_user} to {to_user}")
             await Messages.add_message_id(target, source, message.message_id,
