@@ -103,10 +103,10 @@ async def replace_words(target: dict, text: str):
 
     # Select a match with regex
     for pattern in target["patterns"]:
-        if re.search(pattern, text, re.DOTALL):
-            logger.debug(f"Pattern '{pattern}' found in text")
-            text = re.search(pattern, text, re.DOTALL)
-            text = text.group(target["patterns"][pattern])
+        if re.search(pattern["pattern"], text, re.DOTALL):
+            logger.debug(f"Pattern '{pattern['name']}' found in text")
+            text = re.search(pattern["pattern"], text, re.DOTALL)
+            text = text.group(pattern["group"])
             break
 
     logger.debug("Returning text")

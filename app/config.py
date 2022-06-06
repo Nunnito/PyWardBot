@@ -105,7 +105,7 @@ class Forwarding:
                 "replace_words": {},
                 "blocked_words": [],
                 "source": source,
-                "patterns": {}
+                "patterns": []
             }
         )
 
