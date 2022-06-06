@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from pyrogram import Client, filters, idle
+from pyrogram.enums import ChatType
 from pyrogram.types import (Message, CallbackQuery, InlineKeyboardButton,
                             InlineKeyboardMarkup)
 from pyrogram.errors.exceptions.bad_request_400 import (ChannelInvalid,
@@ -654,9 +655,9 @@ async def new_forwarder_get_source(message: Message, forwarder_id: str,
 
     if not change:
         # Create the text
-        text = "Excellent, now enter the target chat.\n\n"
-        text += "It is added in a very similar way to the source chat., "
-        text += "the only difference is that you can add more than one.\n\n"
+        text = "Excellent, now enter the source chat.\n\n"
+        text += "It is added in a very similar way to the target chat, "
+        text += "the only difference is that more that one cam be added.\n\n"
         text += "You can add chats in several ways:\n\n"
         text += "**-Entering the chat ID**\n"
         text += "`628910404\n628910400`\n\n"
@@ -753,8 +754,10 @@ async def get_chat_info(chat_id: str) -> str:
     # Create the text
     try:
         chat_info = await user.get_chat(chat_id)
-        if chat_info.type == "channel" or chat_info.type == "supergroup":
-            chat_type = "Channel" if chat_info.type == "channel" else "Group"
+        if chat_info.type is ChatType.CHANNEL or\
+                chat_info.type is ChatType.SUPERGROUP:
+            chat_type = ("Channel" if chat_info.type is ChatType.CHANNEL
+                         else "Group")
             text = f"\n\n**Name:** {chat_info.title}"
             text += f"\n**ID:** `{chat_info.id}`"
             text += f"\n**Type:** {chat_type}"
@@ -763,7 +766,7 @@ async def get_chat_info(chat_id: str) -> str:
             text += f"\n**Members count:** {chat_info.members_count}"
             text += "\n**Protected content:** "
             text += "Yes" if chat_info.has_protected_content else "No"
-        elif chat_info.type == "private":
+        elif chat_info.type is ChatType.PRIVATE:
             text = f"\n\n**Name:** {chat_info.first_name}"
             if chat_info.last_name:
                 text += f" {chat_info.last_name}"
@@ -771,7 +774,7 @@ async def get_chat_info(chat_id: str) -> str:
             text += "\n**Type:** Private"
             if chat_info.username:
                 text += f"\n**Username:** @{chat_info.username}"
-        elif chat_info.type == "bot":
+        elif chat_info.type is ChatType.BOT:
             text = f"\n\n**Name:** {chat_info.first_name}"
             text += f"\n**ID:** `{chat_info.id}`"
             text += "\n**Type:** Bot"
