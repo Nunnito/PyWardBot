@@ -15,6 +15,7 @@ from pathlib import Path
 
 from pyrogram import Client, filters
 from pyrogram.raw.functions.messages import SendVote
+from pyrogram.enums import MessageMediaType, PollType
 from pyrogram.types import (Message, InputMediaPhoto, InputMediaVideo,
                             InputMediaAudio, InputMediaDocument,
                             InputMediaAnimation)
@@ -42,6 +43,26 @@ current_media_group = None  # Current media group ID
 
 Messages = MessagesIDs()
 Forwardings = Forwarding()
+
+
+async def get_media_type(message: Message) -> str:
+    match message.media:
+        case MessageMediaType.PHOTO:
+            return message.photo.file_id
+        case MessageMediaType.VIDEO:
+            return message.video.file_id
+        case MessageMediaType.AUDIO:
+            return message.audio.file_id
+        case MessageMediaType.VOICE:
+            return message.voice.file_id
+        case MessageMediaType.DOCUMENT:
+            return message.document.file_id
+        case MessageMediaType.ANIMATION:
+            return message.animation.file_id
+        case MessageMediaType.VIDEO_NOTE:
+            return message.video_note.file_id
+        case MessageMediaType.STICKER:
+            return message.sticker.file_id
 
 
 async def is_forwarder(filter, client: Client, message: Message):
@@ -98,14 +119,14 @@ async def forward_message(message: Message, target: dict, edited=False,
     msg_ids = await Messages.get_message_ids()
     target = str(target["target"])
     source = str(message.chat.id)
-    ids = message.message_id
+    ids = message.id
 
     if media_group:
-        messages = await user.get_media_group(source, message.message_id)
-        ids = [msg.message_id for msg in messages]
+        messages = await user.get_media_group(source, message.id)
+        ids = [msg.id for msg in messages]
 
     if edited:
-        origin_edit_id = str(message.message_id)
+        origin_edit_id = str(message.id)
         edit_id = -1
         can_edit = True
         # If the message id is in the list of messages ids
@@ -131,7 +152,12 @@ async def forward_message(message: Message, target: dict, edited=False,
         msg = await user.forward_messages(target, source, ids)
         from_user = message.chat.title if message.chat.title else\
             message.chat.first_name
-        to_user = msg.chat.title if msg.chat.title else msg.chat.first_name
+
+        if media_group:
+            mgm = msg[0]
+            to_user = mgm.chat.title if mgm.chat.title else mgm.chat.first_name
+        else:
+            to_user = msg.chat.title if msg.chat.title else msg.chat.first_name
         logger.info(f"Forwarding message from {from_user} to {to_user}")
     else:
         logger.error("The chat is restricted from forwarding messages")
@@ -139,11 +165,10 @@ async def forward_message(message: Message, target: dict, edited=False,
 
     if media_group:
         for old_msg, new_msg in zip(messages, msg):
-            await Messages.add_message_id(target, source, old_msg.message_id,
-                                          new_msg.message_id)
+            await Messages.add_message_id(target, source, old_msg.id,
+                                          new_msg.id)
     else:
-        await Messages.add_message_id(target, source, message.message_id,
-                                      msg.message_id)
+        await Messages.add_message_id(target, source, message.id, msg.id)
 
     if media_group and edited:
         await on_media_group_edited(user, msg[0])
@@ -164,7 +189,7 @@ async def copy_message(message: Message, target: dict, edited=False,
         message.chat.first_name
 
     if pinned:
-        origin_pinned_id = str(message.pinned_message.message_id)
+        origin_pinned_id = str(message.pinned_message.id)
         pinned_id = -1
         to_user = await user.get_chat(target)
         to_user = to_user.title if to_user.title else to_user.first_name
@@ -182,7 +207,7 @@ async def copy_message(message: Message, target: dict, edited=False,
         return
 
     elif media_group:
-        messages = await user.get_media_group(source, message.message_id)
+        messages = await user.get_media_group(source, message.id)
         media_input = []
         downloaded_media = []
 
@@ -194,22 +219,23 @@ async def copy_message(message: Message, target: dict, edited=False,
                 path = await msg_media.download()
             # If the chat has not protected content, get the file_id to send it
             else:
-                path = msg_media[msg_media.media].file_id
+                path = await get_media_type(msg_media)
+
             downloaded_media.append(path)
-            if msg_media.media == "photo":
+            if msg_media.media is MessageMediaType.PHOTO:
                 media_input.append(InputMediaPhoto(path, text))
-            elif msg_media.media == "video":
+            elif msg_media.media is MessageMediaType.VIDEO:
                 media_input.append(InputMediaVideo(path, caption=text))
-            elif msg_media.media == "audio":
+            elif msg_media.media is MessageMediaType.AUDIO:
                 media_input.append(InputMediaAudio(path, caption=text))
-            elif msg_media.media == "document":
+            elif msg_media.media is MessageMediaType.DOCUMENT:
                 media_input.append(InputMediaDocument(path, caption=text))
-            elif msg_media.media == "animation":
+            elif msg_media.media is MessageMediaType.ANIMATION:
                 media_input.append(InputMediaAnimation(path, caption=text))
 
         reply_id = None
         if reply:
-            src_reply_id = str(message.reply_to_message.message_id)
+            src_reply_id = str(message.reply_to_message.id)
             # If the message id is in the list of messages ids
             if target in msg_ids and source in msg_ids[target] and\
                     src_reply_id in msg_ids[target][source]:
@@ -231,12 +257,16 @@ async def copy_message(message: Message, target: dict, edited=False,
                 logger.debug(f"Removing file {path}")
                 os.remove(path)
         for old_msg, new_msg in zip(messages, msg):
-            await Messages.add_message_id(target, source, old_msg.message_id,
-                                          new_msg.message_id)
+            await Messages.add_message_id(target, source, old_msg.id,
+                                          new_msg.id)
 
     elif message.media is not None:
-        downloadable_media = ["photo", "video", "audio", "voice", "document",
-                              "animation", "video_note", "sticker"]
+        downloadable_media = [MessageMediaType.PHOTO, MessageMediaType.VIDEO,
+                              MessageMediaType.AUDIO, MessageMediaType.VOICE,
+                              MessageMediaType.DOCUMENT,
+                              MessageMediaType.ANIMATION,
+                              MessageMediaType.VIDEO_NOTE,
+                              MessageMediaType.STICKER]
         text = await replace_words(forwarder, message.caption)
         entities = message.caption_entities
         reply_id = None
@@ -250,7 +280,7 @@ async def copy_message(message: Message, target: dict, edited=False,
             else:
                 logger.debug(f"{from_user} has no protected content, "
                              "using file_id")
-                path = message[message.media].file_id
+                path = await get_media_type(message)
 
         if reply:
             src_reply_id = str(message.reply_to_message_id)
@@ -266,25 +296,25 @@ async def copy_message(message: Message, target: dict, edited=False,
                 return
 
         if edited:
-            origin_edit_id = str(message.message_id)
+            origin_edit_id = str(message.id)
             edit_id = -1
             # If the message id is in the list of messages ids
             if target in msg_ids and source in msg_ids[target] and\
                     origin_edit_id in msg_ids[target][source]:
                 edit_id = msg_ids[target][source][origin_edit_id]
-            if message.media == "photo":
+            if message.media is MessageMediaType.PHOTO:
                 media = InputMediaPhoto(path, text)
-            elif message.media == "video":
+            elif message.media is MessageMediaType.VIDEO:
                 media = InputMediaVideo(path, caption=text)
-            elif message.media == "audio":
+            elif message.media is MessageMediaType.AUDIO:
                 media = InputMediaAudio(path, caption=text)
-            elif message.media == "document":
+            elif message.media is MessageMediaType.DOCUMENT:
                 media = InputMediaDocument(path, caption=text)
-            elif message.media == "animation":
+            elif message.media is MessageMediaType.ANIMATION:
                 media = InputMediaAnimation(path, caption=text)
 
             try:
-                if message.media == "web_page":
+                if message.media is MessageMediaType.WEB_PAGE:
                     text = await replace_words(forwarder, message.text)
                     msg = await user.edit_message_text(target, edit_id, text,
                                                        entities=entities)
@@ -309,42 +339,42 @@ async def copy_message(message: Message, target: dict, edited=False,
                 return
 
         else:
-            if message.media == "photo":
+            if message.media is MessageMediaType.PHOTO:
                 msg = await user.send_photo(target, path, text,
                                             caption_entities=entities,
                                             reply_to_message_id=reply_id)
-            elif message.media == "audio":
+            elif message.media is MessageMediaType.AUDIO:
                 msg = await user.send_audio(target, path, text,
                                             caption_entities=entities,
                                             reply_to_message_id=reply_id)
-            elif message.media == "document":
+            elif message.media is MessageMediaType.DOCUMENT:
                 msg = await user.send_document(target, path, caption=text,
                                                caption_entities=entities,
                                                reply_to_message_id=reply_id)
-            elif message.media == "sticker":
+            elif message.media is MessageMediaType.STICKER:
                 msg = await user.send_sticker(target, path,
                                               reply_to_message_id=reply_id)
-            elif message.media == "video":
+            elif message.media is MessageMediaType.VIDEO:
                 msg = await user.send_video(target, path, text,
                                             caption_entities=entities,
                                             reply_to_message_id=reply_id)
-            elif message.media == "animation":
+            elif message.media is MessageMediaType.ANIMATION:
                 msg = await user.send_animation(target, path, text,
                                                 caption_entities=entities,
                                                 reply_to_message_id=reply_id)
-            elif message.media == "voice":
+            elif message.media is MessageMediaType.VOICE:
                 msg = await user.send_voice(target, path, text,
                                             caption_entities=entities,
                                             reply_to_message_id=reply_id)
-            elif message.media == "video_note":
+            elif message.media is MessageMediaType.VIDEO_NOTE:
                 msg = await user.send_video_note(target, path,
                                                  reply_to_message_id=reply_id)
-            elif message.media == "location":
+            elif message.media is MessageMediaType.LOCATION:
                 latitude = message.location.latitude
                 longitude = message.location.longitude
                 msg = await user.send_location(target, latitude, longitude,
                                                reply_to_message_id=reply_id)
-            elif message.media == "venue":
+            elif message.media is MessageMediaType.VENUE:
                 latitude = message.venue.location.latitude
                 longitude = message.venue.location.longitude
                 title = message.venue.title
@@ -352,23 +382,24 @@ async def copy_message(message: Message, target: dict, edited=False,
                 msg = await user.send_venue(target, latitude, longitude, title,
                                             address,
                                             reply_to_message_id=reply_id)
-            elif message.media == "contact":
+            elif message.media is MessageMediaType.CONTACT:
                 phone_number = message.contact.phone_number
                 first_name = message.contact.first_name
                 last_name = message.contact.last_name
                 msg = await user.send_contact(target, phone_number,
                                               first_name, last_name,
                                               reply_to_message_id=reply_id)
-            elif message.media == "dice":
+            elif message.media is MessageMediaType.DICE:
                 emoji = message.dice.emoji
                 msg = await user.send_dice(target, emoji,
                                            reply_to_message_id=reply_id)
-            elif message.media == "web_page":
+            elif message.media is MessageMediaType.WEB_PAGE:
                 text = await replace_words(forwarder, message.text)
                 msg = await user.send_message(target, text, entities=entities,
                                               reply_to_message_id=reply_id)
             # Only will be sent if the poll type is regular
-            elif message.media == "poll" and message.poll.type == "regular":
+            elif message.media is MessageMediaType.POLL and\
+                    message.poll.type is PollType.REGULAR:
                 question = message.poll.question
                 options = [option.text for option in message.poll.options]
                 is_anonymous = message.poll.is_anonymous
@@ -383,13 +414,14 @@ async def copy_message(message: Message, target: dict, edited=False,
                     logger.error("The poll could not be sent. Maybe the " +
                                  "target is a private chat?")
                     return
-            elif message.media == "poll" and message.poll.type == "quiz":
+            elif message.media is MessageMediaType.POLL and\
+                    message.poll.type is PollType.QUIZ:
                 # Answer the quiz to get the correct answer and explanation
                 peer = await user.resolve_peer(message.chat.id)
-                msg_id = message.message_id
+                msg_id = message.id
                 options = [b'0']
-                r = await user.send(SendVote(peer=peer, msg_id=msg_id,
-                                             options=options))
+                r = await user.invoke(SendVote(peer=peer, msg_id=msg_id,
+                                               options=options))
 
                 # Get the correct answer
                 for question in r.updates[0].results.results:
@@ -420,8 +452,7 @@ async def copy_message(message: Message, target: dict, edited=False,
 
             to_user = msg.chat.title if msg.chat.title else msg.chat.first_name
             logger.info(f"Sending media from {from_user} to {to_user}")
-            await Messages.add_message_id(target, source, message.message_id,
-                                          msg.message_id)
+            await Messages.add_message_id(target, source, message.id, msg.id)
 
         if message.media in downloadable_media:
             if os.path.isfile(path):
@@ -447,7 +478,7 @@ async def copy_message(message: Message, target: dict, edited=False,
                 return
 
         if edited:
-            origin_edit_id = str(message.message_id)
+            origin_edit_id = str(message.id)
             edit_id = -1
             if target in msg_ids and origin_edit_id in msg_ids[target][source]:
                 edit_id = msg_ids[target][source][origin_edit_id]
@@ -471,8 +502,7 @@ async def copy_message(message: Message, target: dict, edited=False,
                                           reply_to_message_id=reply_id)
             to_user = msg.chat.title if msg.chat.title else msg.chat.first_name
             logger.info(f"Sending message from {from_user} to {to_user}")
-            await Messages.add_message_id(target, source, message.message_id,
-                                          msg.message_id)
+            await Messages.add_message_id(target, source, message.id, msg.id)
 
     # Call messages function to handle the new message
     if media_group and reply:
@@ -531,8 +561,7 @@ async def get_targets(event: Message, media_group=False):
     return targets
 
 
-@user.on_message(filters.create(is_forwarder) & filters.edited &
-                 ~filters.media_group)
+@user.on_edited_message(filters.create(is_forwarder) & ~filters.media_group)
 async def on_message_edited(client: Client, message: Message):
     """Handle edited messages"""
     for target in await get_targets(message):
@@ -587,8 +616,7 @@ async def on_media_group_reply(client: Client, message: Message):
             await forward_message(message, target)
 
 
-@user.on_message(filters.create(is_forwarder) & filters.media_group &
-                 filters.edited)
+@user.on_edited_message(filters.create(is_forwarder) & filters.media_group)
 async def on_media_group_edited(client: Client, message: Message):
     """Handle edited media group messages"""
     for target in await get_targets(message):
@@ -622,7 +650,7 @@ async def on_deleted_message(client: Client, messages: list[Message]):
     # If the message comes from a private chat
     if messages[0].chat is None:
         for message in messages:
-            msg_id = str(message.message_id)
+            msg_id = str(message.id)
             for target in msg_ids:
                 for source in msg_ids[target]:
                     if msg_id in msg_ids[target][source]:
@@ -633,7 +661,7 @@ async def on_deleted_message(client: Client, messages: list[Message]):
     # If the message comes from a group or channel
     else:
         for message in messages:
-            msg_id = str(message.message_id)
+            msg_id = str(message.id)
             chat = str(message.chat.id)
             for target in msg_ids:
                 if chat in msg_ids[target] and msg_id in msg_ids[target][chat]:
