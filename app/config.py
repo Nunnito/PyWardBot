@@ -101,6 +101,7 @@ class Forwarding:
                 "forwarding_mode": "copy",
                 "incoming": True,
                 "outgoing": True,
+                "reply": True,
                 "replace_words_mode": "word_boundary_match",
                 "replace_words": {},
                 "blocked_words": [],

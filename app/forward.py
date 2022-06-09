@@ -8,6 +8,7 @@
 # TODO: Make a filter to only send media messages, skipping text and viceversa
 # Ex: If a photo with a caption is sent, only send the photo, not the caption
 # TODO: Toggle message removal from the chat.
+# TODO: Edited, deleted, pinned, replied messages toggles.
 
 import os
 import re
@@ -584,6 +585,8 @@ async def on_message_pinned(client: Client, message: Message):
 async def on_message_reply(client: Client, message: Message):
     """Handle the reply to a message"""
     for target in await get_targets(message):
+        if not target["reply"]:  # If the reply is disabled, continue
+            continue
         if target["forwarding_mode"] == "copy":
             await copy_message(message, target, reply=True)
         else:
@@ -610,6 +613,8 @@ async def on_media_group_reply(client: Client, message: Message):
 
     current_media_group = message.media_group_id
     for target in await get_targets(message):
+        if not target["reply"]:  # If the reply is disabled, continue
+            continue
         if target["forwarding_mode"] == "copy":
             await copy_message(message, target, media_group=True, reply=True)
         else:
