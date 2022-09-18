@@ -529,11 +529,6 @@ async def get_targets(event: Message, media_group=False):
 
     if source in forwarding_ids:
         for forwarder in config["forwarders"]:
-            if outgoing and not forwarder["outgoing"]:
-                continue
-            if not outgoing and not forwarder["incoming"]:
-                continue
-
             for word in forwarder["blocked_words"]:
                 if media_group:
                     for message in event:
@@ -556,6 +551,20 @@ async def get_targets(event: Message, media_group=False):
             if next_forwarder:
                 continue
             if forwarder["enabled"]:
+                # If forward outgoing messages is disabled, add the message ID
+                # to messages.json
+                if outgoing and not forwarder["outgoing"]:
+                    await Messages.add_message_id(str(forwarder["target"]),
+                                                  str(source), event.id,
+                                                  event.id)
+                    continue
+                # If forward incoming messages is disabled, add the message ID
+                # to messages.json
+                if not outgoing and not forwarder["incoming"]:
+                    await Messages.add_message_id(str(forwarder["target"]),
+                                                  str(source), event.id,
+                                                  event.id)
+                    continue
                 if source in [int(src) for src in forwarder["source"].keys()]:
                     targets.append(forwarder)
 
