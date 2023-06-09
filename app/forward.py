@@ -12,7 +12,11 @@
 
 import os
 import re
+import datetime
 from pathlib import Path
+
+from sewar.full_ref import uqi
+from cv2 import imread
 
 from pyrogram import Client, filters
 from pyrogram.raw.functions.messages import SendVote
@@ -64,6 +68,35 @@ async def get_media_type(message: Message) -> str:
             return message.video_note.file_id
         case MessageMediaType.STICKER:
             return message.sticker.file_id
+
+
+async def is_image_blocked(message: Message) -> bool:
+    """Check if the image is blocked"""
+    imgs = await Forwardings.get_blocked_images()
+
+    # Set name of the image to current timestamp
+    name = datetime.datetime.now().timestamp()
+
+    # Download the photo and read it with cv2
+    test_path = await message.download(config_dir/"blocked_img"/f"{name}.jpg")
+    test_img = imread(test_path)
+
+    # Remove the downloaded photo (this is safe because is already in memory)
+    if os.path.isfile(test_path):
+        os.remove(test_path)
+
+    for img in imgs:
+        # Open original image
+        og_img = imread(img)
+
+        # Check if the image is the same size
+        if og_img.shape[:2] == (message.photo.height, message.photo.width):
+            # Check similarity with the original image
+            if uqi(test_img, og_img) >= 0.9:
+                logger.debug(f"Image '{img}' is blocked")
+                return True
+
+    return False
 
 
 async def is_forwarder(filter, client: Client, message: Message):
@@ -273,6 +306,11 @@ async def copy_message(message: Message, target: dict, edited=False,
         reply_id = None
 
         if message.media in downloadable_media:
+            if message.media is MessageMediaType.PHOTO:
+                if await is_image_blocked(message):
+                    logger.error("The image is blocked")
+                    return
+
             # If the chat has protected content, download the media to send it
             if message.chat.has_protected_content:
                 logger.debug(f"{from_user} has protected content, "

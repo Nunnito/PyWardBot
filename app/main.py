@@ -1,9 +1,10 @@
 import hashlib
 import re
+import datetime
 from pathlib import Path
 
 from pyrogram import Client, filters, idle
-from pyrogram.enums import ChatType
+from pyrogram.enums import ChatType, MessageMediaType
 from pyrogram.types import (Message, CallbackQuery, InlineKeyboardButton,
                             InlineKeyboardMarkup)
 from pyrogram.errors.exceptions.bad_request_400 import (ChannelInvalid,
@@ -29,7 +30,7 @@ API_ID = bot_config["api_id"]
 API_HASH = bot_config["api_hash"]
 
 bot = Client(str(Path(config_dir/"bot")), API_ID, API_HASH)
-commands = ["start", "menu", "new"]
+commands = ["start", "menu", "blockimage"]
 answer_users = {}
 
 
@@ -46,8 +47,15 @@ async def is_admin(filter, client: Client, event: Message | CallbackQuery):
 
 @bot.on_message(filters.create(is_admin) & filters.command(commands))
 async def on_command(client: Client, message: Message):
-    if "start" == message.command[0] or "menu" == message.command[0]:
+    current_command = message.command[0]
+
+    if "start" == current_command or "menu" == current_command:
         await menu(message, False)
+    if "blockimage" == current_command:
+        if message.media is MessageMediaType.PHOTO:
+            await block_image(message)
+        else:
+            await message.reply("This command can only be used in photos")
 
 
 @bot.on_message(filters.create(is_admin))
@@ -851,6 +859,20 @@ async def get_chats_id(message: Message) -> list | bool:
                     invalid_ids.append(chat_id)
 
         return chats_ids, invalid_ids
+
+
+async def block_image(message: Message) -> None:
+    """ Add blocked images to all the forwarders. """
+    # Set name to current timestamp
+    name = datetime.datetime.now().timestamp()
+    # Download the image
+    image_path = await message.download(config_dir/"blocked_img"/f"{name}.jpg")
+
+    # Add the image to blocked images
+    await forwardings.add_blocked_image(image_path)
+
+    # Reply
+    await message.reply_text("Image blocked!")
 
 
 if not Path(config_dir/"user.session").exists():

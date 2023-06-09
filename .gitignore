@@ -144,3 +144,6 @@ cython_debug/
 
 # JSON files
 *.json
+
+# Blocked images folder
+blocked_img/

@@ -1,2 +1,4 @@
 Pyrogram
 TgCrypto
+sewar
+opencv-python

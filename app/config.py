@@ -44,7 +44,7 @@ class Bot:
 
 
 class Forwarding:
-    forwarding = {"forwarders": []}
+    forwarding = {"forwarders": [], "blocked_images": []}
 
     async def get_config(self) -> dict:
         """Load the forwarding configuration from the forwarding.json file."""
@@ -120,6 +120,21 @@ class Forwarding:
         for forwarder in config["forwarders"]:
             if forwarder["target"] == int(forwarder_id):
                 config["forwarders"].remove(forwarder)
+
+        with open(config_dir/"forwarding.json", "w") as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+
+    async def get_blocked_images(self) -> list:
+        """Get the list of blocked images."""
+        config = await self.get_config()
+        blocked_images = config["blocked_images"]
+
+        return blocked_images
+
+    async def add_blocked_image(self, image: str):
+        """Add a new blocked image."""
+        config = await self.get_config()
+        config["blocked_images"].append(image)
 
         with open(config_dir/"forwarding.json", "w") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
