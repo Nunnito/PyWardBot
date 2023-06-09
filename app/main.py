@@ -182,6 +182,7 @@ async def menu(message: Message, edit: bool = True) -> None:
 async def forwarders(message: Message) -> None:
     """ Create the forwarders menu. """
     forwarders = (await forwardings.get_config())["forwarders"]
+    forwarders = sorted(forwarders, key=lambda x: x["name"])
 
     # Create the keyboard
     keyboard = []
