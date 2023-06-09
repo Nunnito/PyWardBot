@@ -69,6 +69,17 @@ class Forwarding:
         # Remove duplicates and return the list
         return list(dict.fromkeys(forwarding_ids))
 
+    async def get_forwardings(self) -> list:
+        """Get the list of forwarding targets"""
+        forwarders = (await self.get_config())["forwarders"]
+        forwarding_targets = []
+
+        for forwarder in forwarders:
+            forwarding_targets.append(forwarder["target"])
+
+        # Remove duplicates and return the list
+        return list(dict.fromkeys(forwarding_targets))
+
     async def get_forwarder(self, forwarder_id: str) -> dict:
         """Get the forwarder with the given hash ID."""
         forwarders = (await self.get_config())["forwarders"]

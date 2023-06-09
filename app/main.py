@@ -30,7 +30,8 @@ API_ID = bot_config["api_id"]
 API_HASH = bot_config["api_hash"]
 
 bot = Client(str(Path(config_dir/"bot")), API_ID, API_HASH)
-commands = ["start", "menu", "blockimage"]
+commands = ["start", "menu", "blockimage",
+            "blockall", "rmblockall", "replaceall", "rmreplaceall"]
 answer_users = {}
 
 
@@ -56,6 +57,15 @@ async def on_command(client: Client, message: Message):
             await block_image(message)
         else:
             await message.reply("This command can only be used in photos")
+
+    if "blockall" == message.command[0]:
+        await block_all(message)
+    if "rmblockall" == message.command[0]:
+        await rm_block_all(message)
+    if "replaceall" == message.command[0]:
+        await replace_all(message)
+    if "rmreplaceall" == message.command[0]:
+        await rm_replace_all(message)
 
 
 @bot.on_message(filters.create(is_admin))
@@ -400,7 +410,7 @@ async def add_replace_word(message: Message, forwarder_id: str, change=False):
         message_edit = answer_users[str(user_id)][3]
         answer = message.text
 
-        # Check if the has the right format
+        # Check if has the right format
         if ">" not in answer:
             text = "**Error:** The format is not correct.\n\n"
             text += f"**Text entered:** ```{answer}```"
@@ -890,6 +900,124 @@ async def block_image(message: Message) -> None:
 
     # Reply
     await message.reply_text("Image blocked!")
+
+
+async def block_all(message: Message) -> None:
+    """ Add blocked words to all the forwarders. """
+    # Get the forwarders
+    forwarders_ids = await forwardings.get_forwardings()
+
+    # If the blocked words are empty
+    if message.text.replace("/blockall", "").strip() == "":
+        await message.reply_text("Blocked words can't be empty!")
+        return
+
+    # Get the blocked words
+    blocked_words = message.text.replace("/blockall", "").strip().split("\n")
+
+    # Add the blocked words to all the forwarders
+    for forwarder_id in forwarders_ids:
+        forwarder_dict = await forwardings.get_forwarder(str(forwarder_id))
+
+        # Add the blocked words to the forwarder
+        for blocked_word in blocked_words:
+            if blocked_word not in forwarder_dict["blocked_words"]:
+                forwarder_dict["blocked_words"].append(blocked_word)
+
+        await forwardings.update_forwarder(forwarder_dict)
+
+    await message.reply_text("Word blocking added to all the forwarders.")
+
+
+async def rm_block_all(message: Message) -> None:
+    """ Remove blocked words from all the forwarders. """
+    # Get the forwarders
+    forwarders_ids = await forwardings.get_forwardings()
+
+    # If the blocked words are empty
+    if message.text.replace("/rmblockall", "").strip() == "":
+        await message.reply_text("Blocked words can't be empty!")
+        return
+
+    # Get the blocked words
+    blocked_words = message.text.replace("/rmblockall", "").strip().split("\n")
+
+    # Remove the blocked words from all the forwarders
+    for forwarder_id in forwarders_ids:
+        forwarder_dict = await forwardings.get_forwarder(str(forwarder_id))
+
+        for blocked_word in blocked_words:
+            if blocked_word in forwarder_dict["blocked_words"]:
+                forwarder_dict["blocked_words"].remove(blocked_word)
+
+        await forwardings.update_forwarder(forwarder_dict)
+
+    await message.reply_text("Word blocking removed from all the forwarders.")
+
+
+async def replace_all(message: Message) -> None:
+    """ Add replaced words to all the forwarders. """
+    # Get the forwarders
+    forwarders_ids = await forwardings.get_forwardings()
+
+    # If the replaced words are empty
+    if message.text.replace("/replaceall", "").strip() == "":
+        await message.reply_text("Replaced words can't be empty!")
+        return
+
+    # Get the replaced words
+    replaced_words = message.text.replace("/replaceall", "").strip()
+
+    # Check if has the right format
+    if ">" not in replaced_words:
+        text = "**Error:** The format of the replaced words is incorrect.\n\n"
+        text += f"**Introduced text:** `{replaced_words}`"
+        await message.reply_text(text)
+        return
+
+    # Get the words and the values to replace
+    replaces = replaced_words.split("\n")
+    replaces = [replace.split(">") for replace in replaces]
+
+    # Add the replaced words to all the forwarders
+    for forwarder_id in forwarders_ids:
+        forwarder_dict = await forwardings.get_forwarder(str(forwarder_id))
+
+        for replace in replaces:
+            word, value = replace
+            forwarder_dict["replace_words"][word] = value
+
+        await forwardings.update_forwarder(forwarder_dict)
+
+    await message.reply_text("Word replacement added to all the forwarders.")
+
+
+async def rm_replace_all(message: Message) -> None:
+    """ Remove replaced words from all the forwarders. """
+    # Get the forwarders
+    forwarders_ids = await forwardings.get_forwardings()
+
+    # If the replaced words are empty
+    if message.text.replace("/rmreplaceall", "").strip() == "":
+        await message.reply_text("Replaced words can't be empty!")
+        return
+
+    # Get the replaced words
+    replaced_words = message.text.replace("/rmreplaceall", "")\
+                                 .strip().split("\n")
+
+    # Remove the replaced words from all the forwarders
+    for forwarder_id in forwarders_ids:
+        forwarder_dict = await forwardings.get_forwarder(str(forwarder_id))
+
+        for replace in replaced_words:
+            if replace in forwarder_dict["replace_words"]:
+                forwarder_dict["replace_words"].pop(replace)
+
+        await forwardings.update_forwarder(forwarder_dict)
+
+    await message.reply_text(
+        "Word replacement removed from all the forwarders.")
 
 
 if not Path(config_dir/"user.session").exists():
