@@ -433,6 +433,7 @@ async def copy_message(message: Message, target: dict, edited=False,
                 msg = await user.send_dice(target, emoji,
                                            reply_to_message_id=reply_id)
             elif message.media is MessageMediaType.WEB_PAGE:
+                entities = message.entities
                 text = await replace_words(forwarder, message.text)
                 msg = await user.send_message(target, text, entities=entities,
                                               reply_to_message_id=reply_id)
