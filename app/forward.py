@@ -50,6 +50,13 @@ Messages = MessagesIDs()
 Forwardings = Forwarding()
 
 
+async def is_identical_to_last(message: Message, target: int) -> bool:
+    """Check if the message is identical to the last message"""
+    generator = message._client.get_chat_history(target, 1)
+    last_message = [m async for m in generator]
+    return message.text == last_message[0].text
+
+
 async def get_media_type(message: Message) -> str:
     match message.media:
         case MessageMediaType.PHOTO:
@@ -504,6 +511,12 @@ async def copy_message(message: Message, target: dict, edited=False,
         text = await replace_words(forwarder, message.text)
         entities = message.entities
         reply_id = None
+
+        if not forwarder["duplicate_text"]:
+            if await is_identical_to_last(message, target):
+                logger.debug("The message is identical to the last message, " +
+                             "skipping")
+                return
 
         if reply:
             src_reply_id = str(message.reply_to_message_id)

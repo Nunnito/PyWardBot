@@ -108,6 +108,9 @@ async def on_callback_query(client: Client, callback_query: CallbackQuery):
     if data.startswith("reply_"):
         id_hash = data.split("_")[-1]
         await toggle_reply(message, id_hash)
+    if data.startswith("duplicate_text_"):
+        id_hash = data.split("_")[-1]
+        await toggle_duplicate_text(message, id_hash)
     if data.startswith("forwarding_mode_"):
         id_hash = data.split("_")[-1]
         await change_forwarding_mode(message, id_hash)
@@ -207,6 +210,8 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
     name = f"✏️ Name: {forwarder['name']}"
     enabled = "🟢 Enabled" if forwarder["enabled"] else "🔴 Disabled"
     reply = "🔁 Reply: on" if forwarder["reply"] else "🔁 Reply: off"
+    duplicate_text = ("🔄 Duplicate text: on" if forwarder["duplicate_text"]
+                      else "🔄 Duplicate text: off")
     forwarding_mode = "↪️ Forwarding mode: "
     forwarding_mode += ("copy" if forwarder["forwarding_mode"] == "copy" else
                         "forward")
@@ -219,6 +224,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{name: f"name_{forwarder_id}"}],
         [{enabled: f"enabled_{forwarder_id}"}],
         [{reply: f"reply_{forwarder_id}"}],
+        [{duplicate_text: f"duplicate_text_{forwarder_id}"}],
         [{forwarding_mode: f"forwarding_mode_{forwarder_id}"}],
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
@@ -283,6 +289,16 @@ async def toggle_reply(message: Message, forwarder_id: str):
     forwarder_dict = await forwardings.get_forwarder(forwarder_id)
 
     forwarder_dict["reply"] = not forwarder_dict["reply"]
+    await forwardings.update_forwarder(forwarder_dict)
+    await forwarder(message, forwarder_id)
+
+
+async def toggle_duplicate_text(message: Message, forwarder_id: str):
+    """ Toggle the duplicate text of the forwarder. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    forwarder_dict["duplicate_text"] = not forwarder_dict["duplicate_text"]
     await forwardings.update_forwarder(forwarder_dict)
     await forwarder(message, forwarder_id)
 
