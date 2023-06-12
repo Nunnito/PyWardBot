@@ -2,3 +2,4 @@ Pyrogram
 TgCrypto
 sewar
 opencv-python
+deep_translator

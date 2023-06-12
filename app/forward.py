@@ -15,6 +15,7 @@ import re
 import datetime
 from pathlib import Path
 
+from deep_translator import GoogleTranslator
 from sewar.full_ref import uqi
 from cv2 import imread
 
@@ -55,6 +56,32 @@ async def is_identical_to_last(message: Message, target: int) -> bool:
     generator = message._client.get_chat_history(target, 1)
     last_message = [m async for m in generator]
     return message.text == last_message[0].text
+
+
+async def translate(text: str, to: str, from_: str, show_original: bool,
+                    original_prefix: str, translation_prefix: str) -> str:
+    """Translate the text"""
+    strip_text = False
+    found_hashtag = re.search(r"#\w+\b", text)
+
+    # This is to avoid the translation of the hashtag
+    if found_hashtag:
+        stripped_text = found_hashtag.group()
+        text = text.replace(stripped_text, "3141592")
+        strip_text = True
+
+    # Translate the text
+    translated_text = GoogleTranslator(from_, to).translate(text)
+    if strip_text:
+        translated_text = translated_text.replace("3141592", stripped_text)
+        text = text.replace("3141592", stripped_text)
+
+    # Show the original text and translated text together
+    if show_original:
+        return (f"{original_prefix}\n{text}\n\n"
+                f"{translation_prefix}\n{translated_text}")
+
+    return translated_text
 
 
 async def get_media_type(message: Message) -> str:
@@ -106,14 +133,15 @@ async def is_image_blocked(message: Message) -> bool:
     return False
 
 
-async def is_forwarder(filter, client: Client, message: Message):
+async def is_forwarder(filter, client: Client, message: Message) -> bool:
     """Check if the chat id is in the forwarding list"""
     id = message.chat.id
     forwarding_ids = await Forwardings.get_forwarding_ids()
     return id in forwarding_ids
 
 
-async def replace_words(target: dict, text: str):
+async def replace_words(target: dict, text: str,
+                        is_caption: bool = False) -> str:
     """Replace words and select text with regex"""
     words = target["replace_words"]
     if text is None:
@@ -149,6 +177,19 @@ async def replace_words(target: dict, text: str):
             text = re.search(pattern["pattern"], text, re.DOTALL)
             text = text.group(pattern["group"])
             break
+
+    if target["translate"]:
+        translated_text = await translate(
+            text,
+            target["translate_to"],
+            target["translate_from"],
+            target["translate_show_original"],
+            target["translate_original_prefix"],
+            target["translate_translation_prefix"])
+        if is_caption and len(translated_text) <= 1024:
+            text = translated_text
+        elif not is_caption and len(translated_text) <= 4096:
+            text = translated_text
 
     logger.debug("Returning text")
     return text
@@ -253,7 +294,7 @@ async def copy_message(message: Message, target: dict, edited=False,
         downloaded_media = []
 
         for msg_media in messages:
-            text = await replace_words(forwarder, msg_media.caption)
+            text = await replace_words(forwarder, msg_media.caption, True)
             entities = msg_media.caption_entities
             # If the chat has protected content, download the media to send it
             if msg_media.chat.has_protected_content:
@@ -308,7 +349,7 @@ async def copy_message(message: Message, target: dict, edited=False,
                               MessageMediaType.ANIMATION,
                               MessageMediaType.VIDEO_NOTE,
                               MessageMediaType.STICKER]
-        text = await replace_words(forwarder, message.caption)
+        text = await replace_words(forwarder, message.caption, True)
         entities = message.caption_entities
         reply_id = None
 

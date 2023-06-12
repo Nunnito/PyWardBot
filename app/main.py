@@ -21,6 +21,19 @@ from logger import logger
 app_dir = Path(__file__).parent
 config_dir = app_dir / "config"
 
+# Translation languages
+LANGS = {
+    "auto": "auto",
+    "spanish": "es",
+    "english": "en",
+    "italian": "it",
+    "french": "fr",
+    "portuguese": "pt",
+    "german": "de"
+}
+# Reversed languages
+REV_LANGS = {v: k for k, v in LANGS.items()}
+
 # Load the bot configuration
 bot_config = Bot().get_config()
 forwardings = Forwarding()
@@ -171,6 +184,30 @@ async def on_callback_query(client: Client, callback_query: CallbackQuery):
         id_hash = data.split("_")[-1]
         await delete_forwarder(message, id_hash, 2)
 
+    if data.startswith("translation_"):
+        id_hash = data.split("_")[-1]
+        await translation(message, id_hash)
+    if data.startswith("toggle_translation_"):
+        id_hash = data.split("_")[-1]
+        await toggle_translation(message, id_hash)
+    if data.startswith("toggle_show_original_"):
+        id_hash = data.split("_")[-1]
+        await toggle_show_original(message, id_hash)
+    if data.startswith("translate_to_select_"):
+        id_hash = data.split("_")[-1]
+        await translate_to_select(message, id_hash)
+    if data.startswith("translate_to_set_"):
+        id_hash = data.split("_")[-1]
+        lang_code = data.split("_")[-2]
+        await translate_to_set(message, id_hash, lang_code)
+    if data.startswith("translate_from_select_"):
+        id_hash = data.split("_")[-1]
+        await translate_from_select(message, id_hash)
+    if data.startswith("translate_from_set_"):
+        id_hash = data.split("_")[-1]
+        lang_code = data.split("_")[-2]
+        await translate_from_set(message, id_hash, lang_code)
+
     await callback_query.answer()
 
 
@@ -229,6 +266,8 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
     blocked_words = "🚫 Blocked words"
     source_chats = "👁 Source chats"
 
+    translation = "🗣️ Translation"
+
     # Create the keyboard
     keyboard = [
         [{name: f"name_{forwarder_id}"}],
@@ -239,6 +278,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
         [{source_chats: f"source_chats_{forwarder_id}"}],
+        [{translation: f"translation_{forwarder_id}"}],
         [{"ℹ️ Information": f"info_{forwarder_id}"}],
         [{"🗑️ Delete": f"delete_forwarder_{forwarder_id}"}],
         [{"◀️ Back": "forwarders"}]
@@ -773,6 +813,128 @@ async def delete_forwarder(message: Message, forwarder_id: str, step=1):
 
         # Return to the forwarders menu
         await forwarders(message)
+
+
+async def translation(message: Message, forwarder_id: str):
+    """ Translation system """
+    # Get to and from languages
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+    enable = forwarder_dict["translate"]
+    from_to = REV_LANGS[forwarder_dict["translate_to"]]
+    from_lang = REV_LANGS[forwarder_dict["translate_from"]]
+    show_original = forwarder_dict["translate_show_original"]
+
+    # Create the keyboard
+    keyboard = [
+        [{"🟢 Enabled" if enable else "🔴 Disabled":
+          f"toggle_translation_{forwarder_id}"}],
+        [{f"🔄 Show original: {'Yes' if show_original else 'No'}":
+          f"toggle_show_original_{forwarder_id}"}],
+        [{f"↪️ To: {from_to}": f"translate_to_select_{forwarder_id}"}],
+        [{f"↩️ From: {from_lang}": f"translate_from_select_{forwarder_id}"}],
+        [{"◀️ Back": f"forwarder_{forwarder_id}"}]
+    ]
+
+    # Create the keyboard
+    keyboard = await create_keyboard(keyboard)
+    # Create the text
+    text = "Configure the translation"
+
+    # Send the message
+    await message.edit(text, reply_markup=keyboard)
+
+
+async def toggle_translation(message: Message, forwarder_id: str):
+    """ Toggle the translation of the forwarder. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    forwarder_dict["translate"] = not forwarder_dict["translate"]
+    await forwardings.update_forwarder(forwarder_dict)
+    await translation(message, forwarder_id)
+
+
+async def toggle_show_original(message: Message, forwarder_id: str):
+    """ Toggle the show original of the forwarder. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    forwarder_dict["translate_show_original"] = not forwarder_dict[
+        "translate_show_original"]
+    await forwardings.update_forwarder(forwarder_dict)
+    await translation(message, forwarder_id)
+
+
+async def translate_to_select(message: Message, forwarder_id: str):
+    """ Select the to language. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    # Create the keyboard
+    keyboard = []
+    for lang, lang_code in LANGS.items():
+        if lang == "auto":
+            continue
+        elif lang_code == forwarder_dict["translate_to"]:
+            btn_text = f"🟢 {lang}"
+        else:
+            btn_text = f"🔴 {lang}"
+        btn_data = {btn_text: f"translate_to_set_{lang_code}_{forwarder_id}"}
+        keyboard.append([btn_data])
+    keyboard.append([{"◀️ Back": f"translation_{forwarder_id}"}])
+
+    # Create the keyboard
+    keyboard = await create_keyboard(keyboard)
+    # Create the text
+    text = "Select the language to translate to"
+
+    # Send the message
+    await message.edit(text, reply_markup=keyboard)
+
+
+async def translate_to_set(message: Message, forwarder_id: str, lang: str):
+    """ Set the to language. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+    forwarder_dict["translate_to"] = lang
+
+    await forwardings.update_forwarder(forwarder_dict)
+    await translate_to_select(message, forwarder_id)
+
+
+async def translate_from_select(message: Message, forwarder_id: str):
+    """ Select the from language. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    # Create the keyboard
+    keyboard = []
+    for lang, lang_code in LANGS.items():
+        if lang_code == forwarder_dict["translate_from"]:
+            btn_text = f"🔴 {lang}"
+        else:
+            btn_text = f"🟢 {lang}"
+        btn_data = {btn_text: f"translate_from_set_{lang_code}_{forwarder_id}"}
+        keyboard.append([btn_data])
+    keyboard.append([{"◀️ Back": f"translation_{forwarder_id}"}])
+
+    # Create the keyboard
+    keyboard = await create_keyboard(keyboard)
+    # Create the text
+    text = "Select the language to translate from"
+
+    # Send the message
+    await message.edit(text, reply_markup=keyboard)
+
+
+async def translate_from_set(message: Message, forwarder_id: str, lang: str):
+    """ Set the from language. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+    forwarder_dict["translate_from"] = lang
+
+    await forwardings.update_forwarder(forwarder_dict)
+    await translate_from_select(message, forwarder_id)
 
 
 async def create_keyboard(buttons: list) -> InlineKeyboardMarkup:
