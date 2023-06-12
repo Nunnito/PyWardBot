@@ -113,7 +113,7 @@ class Forwarding:
                 "incoming": True,
                 "outgoing": True,
                 "reply": True,
-                "duplicate_text": False,
+                "duplicated_text": False,
                 "send_text_only": False,
                 "translate": False,
                 "translate_to": "en",

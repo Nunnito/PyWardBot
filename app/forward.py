@@ -563,7 +563,7 @@ async def copy_message(message: Message, target: dict, edited=False,
         entities = message.entities
         reply_id = None
 
-        if not forwarder["duplicate_text"]:
+        if not forwarder["duplicated_text"]:
             if await is_identical_to_last(message, target):
                 logger.debug("The message is identical to the last message, " +
                              "skipping")
