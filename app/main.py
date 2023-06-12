@@ -595,8 +595,8 @@ async def source_chat(message: Message, forwarder_id: str, source_id: str):
     text += await get_chat_info(source_id)
 
     # Update the forwarders name
-    if re.search(r"\*\*Nombre:\*\* (.+)", text):
-        name = re.search(r"\*\*Nombre:\*\* (.+)", text).group(1)
+    if re.search(r"\*\*Name:\*\* (.+)", text):
+        name = re.search(r"\*\*Name:\*\* (.+)", text).group(1)
         forwarder_dict = await forwardings.get_forwarder(forwarder_id)
         forwarder_dict["source"][source_id] = name
         await forwardings.update_forwarder(forwarder_dict)
@@ -622,7 +622,7 @@ async def source_add(message: Message, forwarder_id: str, change=False):
     user_id = message.chat.id
     # Create the keyboard
     keyboard = [
-        [{"◀️ Atrás": f"source_chats_{forwarder_id}"}]
+        [{"◀️ Back": f"source_chats_{forwarder_id}"}]
     ]
     keyboard = await create_keyboard(keyboard)
 
