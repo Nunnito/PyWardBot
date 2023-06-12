@@ -847,7 +847,7 @@ async def translation(message: Message, forwarder_id: str):
           f"toggle_translation_{forwarder_id}"}],
         [{f"🔄 Show original: {'Yes' if show_original else 'No'}":
           f"toggle_show_original_{forwarder_id}"}],
-        [{f"↪️ To: {from_to}": f"translate_to_select_{forwarder_id}"}],
+        [{f"↪️ To: {to_lang}": f"translate_to_select_{forwarder_id}"}],
         [{f"↩️ From: {from_lang}": f"translate_from_select_{forwarder_id}"}],
         [{"◀️ Back": f"forwarder_{forwarder_id}"}]
     ]
@@ -890,7 +890,7 @@ async def translate_to_select(message: Message, forwarder_id: str):
     # Create the keyboard
     keyboard = []
     for lang, lang_code in LANGS.items():
-        if lang == "auto":
+        if lang_code == "auto":
             continue
         elif lang_code == forwarder_dict["translate_to"]:
             btn_text = f"🟢 {lang}"
