@@ -23,13 +23,13 @@ config_dir = app_dir / "config"
 
 # Translation languages
 LANGS = {
-    "auto": "auto",
-    "spanish": "es",
-    "english": "en",
-    "italian": "it",
-    "french": "fr",
-    "portuguese": "pt",
-    "german": "de"
+    "Auto": "auto",
+    "Spanish": "es",
+    "English": "en",
+    "Italian": "it",
+    "French": "fr",
+    "Portuguese": "pt",
+    "German": "de"
 }
 # Reversed languages
 REV_LANGS = {v: k for k, v in LANGS.items()}
