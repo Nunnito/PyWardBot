@@ -120,7 +120,7 @@ class Forwarding:
                 "translate_from": "auto",
                 "translate_show_original": False,
                 "translate_original_prefix": "Original:",
-                "translate_translation_prefix": "Translated:",
+                "translate_translation_prefix": "Traducido:",
                 "replace_words_mode": "word_boundary_match",
                 "replace_words": {},
                 "blocked_words": [],
