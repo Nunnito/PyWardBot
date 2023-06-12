@@ -291,7 +291,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{"◀️ Back": "forwarders"}]
     ]
     if forwarder["forwarding_mode"] != "copy":
-        keyboard.pop(3)
+        keyboard.pop(5)
 
     text = "Forwarding settings"
 
