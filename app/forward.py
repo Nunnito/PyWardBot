@@ -328,8 +328,18 @@ async def copy_message(message: Message, target: dict, edited=False,
                              "because it does not exist in the target chat")
                 return
 
-        msg = await user.send_media_group(target, media_input,
+        if forwarder["send_text_only"]:
+            msg = await user.send_message(target, text, entities=entities,
                                           reply_to_message_id=reply_id)
+            await Messages.add_message_id(target, source, messages[0].id,
+                                          msg.id)
+        else:
+            msg = await user.send_media_group(target, media_input,
+                                              reply_to_message_id=reply_id)
+            for old_msg, new_msg in zip(messages, msg):
+                await Messages.add_message_id(target, source, old_msg.id,
+                                              new_msg.id)
+
         to_user = msg[0].chat.title if msg[0].chat.title else\
             msg[0].chat.first_name
         logger.info(f"Copying media group from {from_user} to {to_user}")
@@ -338,9 +348,6 @@ async def copy_message(message: Message, target: dict, edited=False,
             if os.path.isfile(path):
                 logger.debug(f"Removing file {path}")
                 os.remove(path)
-        for old_msg, new_msg in zip(messages, msg):
-            await Messages.add_message_id(target, source, old_msg.id,
-                                          new_msg.id)
 
     elif message.media is not None:
         downloadable_media = [MessageMediaType.PHOTO, MessageMediaType.VIDEO,
@@ -426,7 +433,10 @@ async def copy_message(message: Message, target: dict, edited=False,
                 return
 
         else:
-            if message.media is MessageMediaType.PHOTO:
+            if forwarder["send_text_only"] and text != "":
+                msg = await user.send_message(target, text, entities=entities,
+                                              reply_to_message_id=reply_id)
+            elif message.media is MessageMediaType.PHOTO:
                 msg = await user.send_photo(target, path, text,
                                             caption_entities=entities,
                                             reply_to_message_id=reply_id)

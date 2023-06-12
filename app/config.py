@@ -114,6 +114,7 @@ class Forwarding:
                 "outgoing": True,
                 "reply": True,
                 "duplicate_text": False,
+                "send_text_only": False,
                 "translate": False,
                 "translate_to": "en",
                 "translate_from": "auto",

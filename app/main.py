@@ -184,6 +184,10 @@ async def on_callback_query(client: Client, callback_query: CallbackQuery):
         id_hash = data.split("_")[-1]
         await delete_forwarder(message, id_hash, 2)
 
+    if data.startswith("send_text_only_"):
+        id_hash = data.split("_")[-1]
+        await toggle_send_text_only(message, id_hash)
+
     if data.startswith("translation_"):
         id_hash = data.split("_")[-1]
         await translation(message, id_hash)
@@ -266,6 +270,8 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
     blocked_words = "🚫 Blocked words"
     source_chats = "👁 Source chats"
 
+    send_text_only = ("🔄 Send text only: on" if forwarder["send_text_only"]
+                      else "🔄 Send text only: off")
     translation = "🗣️ Translation"
 
     # Create the keyboard
@@ -278,6 +284,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
         [{source_chats: f"source_chats_{forwarder_id}"}],
+        [{send_text_only: f"send_text_only_{forwarder_id}"}],
         [{translation: f"translation_{forwarder_id}"}],
         [{"ℹ️ Information": f"info_{forwarder_id}"}],
         [{"🗑️ Delete": f"delete_forwarder_{forwarder_id}"}],
@@ -813,6 +820,16 @@ async def delete_forwarder(message: Message, forwarder_id: str, step=1):
 
         # Return to the forwarders menu
         await forwarders(message)
+
+
+async def toggle_send_text_only(message: Message, forwarder_id: str):
+    """ Toggle send text only """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    forwarder_dict["send_text_only"] = not forwarder_dict["send_text_only"]
+    await forwardings.update_forwarder(forwarder_dict)
+    await forwarder(message, forwarder_id)
 
 
 async def translation(message: Message, forwarder_id: str):
