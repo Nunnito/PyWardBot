@@ -1039,13 +1039,13 @@ async def get_chats_id(message: Message) -> list | bool:
             chat_username_url = re.search(r"https://t.me/(\w+)/\d+", chat)
             is_username = re.search(r"^@?\w+", chat)
             if chat_id_url:
-                chat_id = f"-100{chat_id_url.group(1)}"
+                chat_id = int(f"-100{chat_id_url.group(1)}")
             elif chat_username_url:
                 chat_id = chat_username_url.group(1)
+            elif chat.isnumeric() or chat.startswith("-"):
+                chat_id = int(chat)
             elif is_username:
                 chat_id = is_username.group(0)
-            elif chat.isnumeric():
-                chat_id = chat
             else:
                 invalid_ids.append(chat)
 
