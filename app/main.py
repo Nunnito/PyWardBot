@@ -837,7 +837,7 @@ async def translation(message: Message, forwarder_id: str):
     # Get to and from languages
     forwarder_dict = await forwardings.get_forwarder(forwarder_id)
     enable = forwarder_dict["translate"]
-    from_to = REV_LANGS[forwarder_dict["translate_to"]]
+    to_lang = REV_LANGS[forwarder_dict["translate_to"]]
     from_lang = REV_LANGS[forwarder_dict["translate_from"]]
     show_original = forwarder_dict["translate_show_original"]
 
