@@ -54,7 +54,7 @@ async def md5(word): return hashlib.md5(word.encode("utf-8")).hexdigest()
 
 async def is_admin(filter, client: Client, event: Message | CallbackQuery):
     """ Check if the user is an admin"""
-    id = event.chat.id if type(event) == Message else event.message.chat.id
+    id = event.chat.id if type(event) is Message else event.message.chat.id
     admins = Bot().get_config()["admins"]
     return id in admins
 
@@ -1213,7 +1213,12 @@ async def rm_replace_all(message: Message) -> None:
 if not Path(config_dir/"user.session").exists():
     logger.info("Log-in with your phone number")
 user.start()
-Bot().add_admin(user.get_me().id)
+
+# Iter over all chats
+for dialog in user.get_dialogs():
+    pass
+
+Bot().add_admin(user.get_me().id)  # Add user id to admin database
 if not Path(config_dir/"bot.session").exists():
     logger.info("Log-in with you bot token")
 bot.start()
