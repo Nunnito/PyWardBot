@@ -279,7 +279,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{name: f"name_{forwarder_id}"}],
         [{enabled: f"enabled_{forwarder_id}"}],
         [{reply: f"reply_{forwarder_id}"}],
-        [{duplicated_text: f"duplicate_text_{forwarder_id}"}],
+        [{duplicated_text: f"duplicated_text_{forwarder_id}"}],
         [{forwarding_mode: f"forwarding_mode_{forwarder_id}"}],
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
