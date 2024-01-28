@@ -624,7 +624,6 @@ async def copy_message(message: Message, target: dict, edited=False,
 async def get_targets(event: Message, media_group=False):
     """Get the target chats for the message"""
     targets = []
-    next_forwarder = False
     source = event.chat.id
     forwarding_ids = await Forwardings.get_forwarding_ids()
     config = await Forwardings.get_config()
@@ -632,6 +631,8 @@ async def get_targets(event: Message, media_group=False):
 
     if source in forwarding_ids:
         for forwarder in config["forwarders"]:
+            next_forwarder = False
+
             for word in forwarder["blocked_words"]:
                 if media_group:
                     for message in event:
