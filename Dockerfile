@@ -10,6 +10,9 @@ COPY requirements.txt .
 # Run pip to install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install the optional dependencies
+RUN pip install --no-cache-dir optional-requirements.txt
+
 # Copy the source code into the container
 COPY . .
 
