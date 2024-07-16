@@ -5,13 +5,13 @@ FROM python:3.11-slim
 WORKDIR /usr/src/app
 
 # Copy the requirements file into the container at /usr/src/app
-COPY requirements.txt .
+COPY requirements.txt optional-requirements.txt ./
 
 # Run pip to install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install the optional dependencies
-RUN pip install --no-cache-dir optional-requirements.txt
+RUN pip install --no-cache-dir -r optional-requirements.txt
 
 # Copy the source code into the container
 COPY . .
