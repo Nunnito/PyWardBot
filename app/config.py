@@ -30,7 +30,13 @@ class Bot:
 
             with open(config_dir/"bot.json", "w") as f:
                 json.dump(self.bot, f, indent=4, ensure_ascii=False)
-            exit(1)
+
+            if not os.getenv("API_ID") or not os.getenv("API_HASH"):
+                logger.error("API_ID and API_HASH environment variables not " +
+                             " found please add them to your environment " +
+                             "variables.")
+                logger.error("Exiting...")
+                exit(1)
 
         with open(config_dir/"bot.json", "r") as f:
             return json.load(f)
