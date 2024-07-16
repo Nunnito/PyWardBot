@@ -24,7 +24,9 @@ class Bot:
             logger.warning("bot.json has been created with default values. " +
                            "Please edit it with your own api_id and api_hash" +
                            " values. You can find them on " +
-                           "https://my.telegram.org/apps")
+                           "https://my.telegram.org/apps.\n" +
+                           "you can also use the API_ID and API_HASH " +
+                           "envinroment variables.")
 
             with open(config_dir/"bot.json", "w") as f:
                 json.dump(self.bot, f, indent=4, ensure_ascii=False)

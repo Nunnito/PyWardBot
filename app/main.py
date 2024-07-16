@@ -1,6 +1,7 @@
 import hashlib
 import re
 import datetime
+from os import getenv
 from pathlib import Path
 
 from pyrogram import Client, filters, idle
@@ -39,8 +40,8 @@ bot_config = Bot().get_config()
 forwardings = Forwarding()
 
 # Set up the Telegram client
-API_ID = bot_config["api_id"]
-API_HASH = bot_config["api_hash"]
+API_ID = getenv("API_ID") if getenv("API_ID") else bot_config["api_id"]
+API_HASH = getenv("API_HASH") if getenv("API_HASH") else bot_config["api_hash"]
 
 bot = Client(str(Path(config_dir/"bot")), API_ID, API_HASH)
 commands = ["start", "menu", "blockimage",
