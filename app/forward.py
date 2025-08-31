@@ -652,9 +652,33 @@ async def get_targets(event: Message, media_group=False):
                         if word.lower() in event.text.lower():
                             next_forwarder = True
                             break
-
             if next_forwarder:
                 continue
+
+            # whitelist
+            if len(forwarder["whitelist_words"]) > 0:
+                next_forwarder = True
+            for word in forwarder["whitelist_words"]:
+                if media_group:
+                    for message in event:
+                        if message.caption is not None:
+                            if word.lower() in message.caption.lower():
+                                next_forwarder = False
+                                break
+                        if not next_forwarder:
+                            break
+                else:
+                    if event.caption is not None:
+                        if word.lower() in event.caption.lower():
+                            next_forwarder = False
+                            break
+                    if event.text is not None:
+                        if word.lower() in event.text.lower():
+                            next_forwarder = False
+                            break
+            if next_forwarder:
+                continue
+
             if forwarder["enabled"]:
                 # If forward outgoing messages is disabled, add the message ID
                 # to messages.json

@@ -18,6 +18,7 @@ PyWardBot is an open source Telegram message forwarder powered by
 - Add origin chats
 - Get chat info
 - Two sending mode: **copy message or forward message**
+- Whitelist words
 
 ## Use cases
 - Forward messages from one chat to another

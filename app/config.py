@@ -132,8 +132,10 @@ class Forwarding:
                 "replace_words_mode": "word_boundary_match",
                 "replace_words": {},
                 "blocked_words": [],
+                # whitelist
+                "whitelist_words": [],
                 "source": source,
-                "patterns": []
+                "patterns": [],
             }
         )
 

@@ -99,6 +99,9 @@ async def on_message(client: Client, message: Message):
             await add_replace_word(message, forwarder_id, True)
         elif answer_type == "add_blocked_word":
             await add_blocked_word(message, forwarder_id, True)
+        # whitelist
+        elif answer_type == "add_whitelist_word":
+            await add_whitelist_word(message, forwarder_id, True)
         elif answer_type == "source_add":
             await source_add(message, forwarder_id, True)
         elif answer_type == "new_forwarder_target":
@@ -158,6 +161,17 @@ async def on_callback_query(client: Client, callback_query: CallbackQuery):
     if data.startswith("blocked_add_"):
         id_hash = data.split("_")[-1]
         await add_blocked_word(message, id_hash)
+    # whitelist
+    if data.startswith("whitelist_words_"):
+        id_hash = data.split("_")[-1]
+        await change_whitelist_words(message, id_hash)
+    if data.startswith("whitelist_delete_"):
+        id_hash = data.split("_")[-1]
+        word = data.split("_")[-2]
+        await delete_whitelist_word(message, id_hash, word)
+    if data.startswith("whitelist_add_"):
+        id_hash = data.split("_")[-1]
+        await add_whitelist_word(message, id_hash)
     if data.startswith("source_chats_"):
         id_hash = data.split("_")[-1]
         await source_chats(message, id_hash)
@@ -269,6 +283,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
                         "forward")
     replace_words = "🔖 Words to replace"
     blocked_words = "🚫 Blocked words"
+    whitelist_words = "✅ Whitelist words"
     source_chats = "👁 Source chats"
 
     send_text_only = ("🔄 Send text only: on" if forwarder["send_text_only"]
@@ -284,6 +299,7 @@ async def forwarder(message: Message, forwarder_id: str) -> None:
         [{forwarding_mode: f"forwarding_mode_{forwarder_id}"}],
         [{replace_words: f"replace_words_{forwarder_id}"}],
         [{blocked_words: f"blocked_words_{forwarder_id}"}],
+        [{whitelist_words: f"whitelist_words_{forwarder_id}"}],
         [{source_chats: f"source_chats_{forwarder_id}"}],
         [{send_text_only: f"send_text_only_{forwarder_id}"}],
         [{translation: f"translation_{forwarder_id}"}],
@@ -564,6 +580,86 @@ async def add_blocked_word(message: Message, forwarder_id: str, change=False):
         await change_blocked_words(message_edit, forwarder_id)
         answer_users[str(user_id)] = [False, None, None, None]
 
+async def change_whitelist_words(message: Message, forwarder_id: str):
+    """ Change the whitelist words of the forwarder. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    # Create the keyboard
+    keyboard = []
+    for word in forwarder_dict["whitelist_words"]:
+        word_md5 = await md5(word)
+        keyboard.append([
+            {f"{word}": f"whitelist_delete_{word_md5}_{forwarder_id}"}])
+    keyboard.append([{"➕ Add": f"whitelist_add_{forwarder_id}"}])
+    keyboard.append([{"◀️ Back": f"forwarder_{forwarder_id}"}])
+    keyboard = await create_keyboard(keyboard)
+
+    # Create the text
+    text = "Add a word to whitelist.\n"
+    text += "To delete a word, click on its name."
+
+    # Send the message
+    await message.edit(text, reply_markup=keyboard)
+
+
+async def delete_whitelist_word(message: Message, forwarder_id: str,
+                              word_md5: str):
+    """ Delete a whitelist word from the forwarder. """
+    # Get the forwarder
+    forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+    # Find the word by its md5
+    for word in forwarder_dict["whitelist_words"]:
+        if await md5(word) == word_md5:
+            break
+
+    # Delete the word
+    forwarder_dict["whitelist_words"].remove(word)
+    await forwardings.update_forwarder(forwarder_dict)
+    await change_whitelist_words(message, forwarder_id)
+
+
+async def add_whitelist_word(message: Message, forwarder_id: str, change=False):
+    """ Add a whitelist word to the forwarder. """
+    user_id = message.chat.id
+    # Create the keyboard
+    keyboard = [
+        [{"◀️ Back": f"whitelist_words_{forwarder_id}"}]
+    ]
+    keyboard = await create_keyboard(keyboard)
+
+    if not change:
+        # Create the text
+        text = "Enter the word you want to whitelist(only text contain one of whitelist words will be forwarded if it is set).\n\n"
+        text += "You can add several words to block at the same time, \n"
+        text += "just split them with a line break.\n\n"
+        text += "Example:\n"
+        text += "`word1\nword2\nword3`"
+
+        # Send the message
+        await message.edit(text, reply_markup=keyboard)
+
+        answer_users[str(user_id)] = [True, "add_whitelist_word", forwarder_id,
+                                      message]
+    else:
+        message_edit = answer_users[str(user_id)][3]
+        answer = message.text
+
+        # Get the words and the values to whitelist
+        whitelists = answer.split("\n")
+
+        # Get the forwarder
+        forwarder_dict = await forwardings.get_forwarder(forwarder_id)
+
+        # Add the words and the values to whitelist
+        for whitelist in whitelists:
+            forwarder_dict["whitelist_words"].append(whitelist)
+
+        # Update the forwarder
+        await forwardings.update_forwarder(forwarder_dict)
+        await change_whitelist_words(message_edit, forwarder_id)
+        answer_users[str(user_id)] = [False, None, None, None]
 
 async def source_chats(message: Message, forwarder_id) -> None:
     """ Create the forwarders menu. """
